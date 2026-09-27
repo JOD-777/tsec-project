@@ -100,10 +100,20 @@ export function toggleStep(workflow: Workflow, id: string): Workflow {
 
 export function documentChecklist(workflow: Workflow) {
   const documents = new Map<string, string[]>();
-  for (const step of workflowGraph(workflow).items) for (const name of step.documents) {
+  const { items } = workflowGraph(workflow);
+  for (const step of items) for (const name of step.documents) {
     documents.set(name, [...(documents.get(name) ?? []), step.title]);
   }
-  return [...documents].map(([name, usedBy]) => ({ name, usedBy, ready: workflow.documents.includes(name) }));
+  return [...documents].map(([name, usedBy]) => ({ name, usedBy, ready: workflow.documents.includes(name),
+    stepIds: items.filter((step) => step.documents.includes(name)).map((step) => step.id),
+    sourceIds: [...new Set(items.filter((step) => step.documents.includes(name)).map((step) => step.sourceId))],
+  }));
+}
+
+export function stepDocumentReadiness(workflow: Workflow, id: string) {
+  const step = workflowGraph(workflow).items.find((item) => item.id === id);
+  const missing = step?.documents.filter((name) => !workflow.documents.includes(name)) ?? [];
+  return { required: step?.documents.length ?? 0, prepared: (step?.documents.length ?? 0) - missing.length, missing };
 }
 
 export function supportsDemoGoal(query: string) {

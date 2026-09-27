@@ -2,6 +2,24 @@
 
 Updated: 27 September 2026
 
+## Roadmap workspace tools and admin catalogue
+
+Follow the master prompt's what-if (goal what-if route), document matrix and export requirements. Reuse supported procedure questions and the existing browser-local workflow engine. No authentication, Supabase, uploads or ingestion changes; no new dependencies or personal names.
+
+1. Expand the roadmap canvas to the available window, compact the toolbar/progress and make overview/details collapsible. Keep the phone checklist and small-screen dialog.
+2. Add non-destructive what-if comparisons for all six supported procedures. Compare steps, documents, agencies and complexity; leave unknown fees/times explicit. Apply only on user action, preserving unaffected completions, notes and readiness while reopening affected dependencies.
+3. Reuse the document checklist in a full readiness matrix and expose per-step readiness, reuse and official references. Prepared state is independent from step completion and does not upload files.
+4. Add a full printable report with progress, steps, prerequisites, readiness and sources; use browser Print / Save as PDF. Exclude notes unless selected.
+5. Test compiler alternatives, preview immutability, applying/reopening, persistence, responsive canvas/panels and actual browser PDF output. Run lint, typecheck, tests and production build before marking complete.
+
+Implemented: all six procedures have working what-if, document-readiness and printable report routes. Overview and step details open by default on desktop, have wider responsive panels and collapse independently. The graph uses available space, wraps card content and renders its minimap. Phone and tablet details remain accessible through a dialog. Scenario previews do not write to storage; explicit application preserves unaffected progress, notes and prepared documents.
+
+The local admin catalogue now covers all six procedures, eight source references and 42 default steps. Claims can be inspected by procedure, procedure cards link to each tool, and Run graph checks evaluates all 34 supported intake combinations for graph validity, source references and completable required tasks. These diagnostics do not verify government rules. Existing food-sample review decisions and audit history remain local and preserve citizen progress.
+
+Validation: lint, strict typecheck, 65 unit tests and the Webpack production build pass. Browser coverage checks preview/discard immutability, scenario application and progress preservation, document persistence, print controls and actual PDF output, all tool routes across six procedures and five viewport widths, and dark-mode hydration. React Flow card checks cover overflow, overlap and minimap rendering at three widths in both themes and three UI languages. Admin checks cover all seven sections across five widths and review decisions without progress loss. The existing local smoke suite also passes.
+
+Delivery remains local on `feat/local-roadmap-tools` for review. Authentication, shared backend, uploads, ingestion, dependencies and API contracts are unchanged. The master prompt's wider production scope remains integration work for teammates.
+
 ## Service workflows and demo hub
 
 Scope: complete the existing six service cards as browser-local sample workflows, following the PS's procedure/dependency visualizer and the master prompt's service-detail, deterministic demo and execution requirements. Preserve the team's existing design and food workflow. Authentication, shared backend and remote database remain untouched. Push to `main` only after the user's requested verification passes.

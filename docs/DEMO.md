@@ -50,3 +50,24 @@ PLAYWRIGHT_MODULE_PATH=/path/to/playwright node e2e/service-workflows.mjs
 ```
 
 The service checks include a failed optional intent API, all six workflows, isolated persistence, detail-page content, graph rendering, light/dark themes and layouts at 320, 375, 768, 1024 and 1440 pixels.
+
+## Roadmap workspace tools
+
+The roadmap uses the available window. Overview and Step details open initially on desktop; each can collapse independently. The first available step is selected until you choose another. Phones use the accessible checklist and open details on request.
+
+1. Open a roadmap. Collapse both panels to see the full canvas, then reopen Overview or choose a node to inspect its details. Switch Graph/List and try the filters.
+2. Open **What-if**. Change a supported procedure answer. Review the before/after measures, added/removed/updated steps, document/agency changes and completions needing review. Preview and Discard do not write saved progress.
+3. Select **Apply scenario to my roadmap** to use the new profile. Unaffected completions, notes and prepared-document selections remain; changed steps and affected descendants reopen. Other saved procedures are unchanged.
+4. Open **Readiness**. Mark preparation items and expand their related steps/sources. Reload to show persistence. Prepared status is separate from task completion; files are not uploaded or verified.
+5. Open **Print / PDF**. The full report includes every step, status, prerequisites, progress, preparation checklist and official sources, independent of graph search/filter/collapse state. Choose whether to include local notes, then use the browser's **Print / Save as PDF** dialog.
+6. In `/admin`, inspect all six Procedures and eight Sources. Claims has a procedure selector. **Run graph checks** compiles and checks all 34 supported intake combinations. The existing synthetic source review still affects only the food sample and preserves citizen progress.
+
+The tool pages also have direct links at `/app/goals/<route-id>/what-if`, `/documents` and `/print`. Fee and time comparisons remain unavailable unless the supported procedure has verified values; no estimates are invented.
+
+```sh
+PLAYWRIGHT_MODULE_PATH=/path/to/playwright node e2e/roadmap-tools.mjs
+PLAYWRIGHT_MODULE_PATH=/path/to/playwright node e2e/reactflow-ui.mjs
+PLAYWRIGHT_MODULE_PATH=/path/to/playwright node e2e/admin-catalogue.mjs
+```
+
+`roadmap-tools.mjs` produces an actual Chromium PDF report and a second report with opt-in notes in the temporary artifacts directory. Set `CIVICFLOW_ARTIFACTS` to choose another output directory.

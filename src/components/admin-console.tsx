@@ -17,11 +17,15 @@ import { toast } from "sonner";
 import { SiteHeader } from "@/components/site-header";
 import { useLocalDemo, updateDemo } from "@/lib/local-demo";
 import { AdminPanel } from "@/components/admin-panel";
-import { dependencies, sources, steps } from "@/lib/demo-data";
+import { procedureSources } from "@/lib/procedures";
+import { catalogueInventory } from "@/lib/catalogue";
 import { validateGraph } from "@/lib/graph";
 export function AdminConsole() {
   const demo = useLocalDemo();
   const state = demo.review;
+  const inventory = catalogueInventory();
+  const totalSteps = inventory.reduce((total, entry) => total + entry.items.length, 0);
+  const graphsValid = inventory.every((entry) => validateGraph(entry.items.map((step) => step.id), entry.edges).valid);
   const [active, setActive] = useState("Changes");
   function decide(next: "approved" | "rejected") {
     const persisted = updateDemo((current) => ({ ...current, review: next, audit: [...current.audit, { action: `Synthetic change ${next}`, at: new Date().toISOString() }].slice(-100) }));
@@ -48,18 +52,18 @@ export function AdminConsole() {
           </div>
           <span className="badge">
             <span className="size-2 rounded-full bg-emerald-500" />
-            Demo system healthy
+            6 sample procedures
           </span>
         </div>
         <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Metric icon={<Database />} value={String(sources.length)} label="Sample source links" />
-          <Metric icon={<FileCheck2 />} value={String(steps.length)} label="Sample steps" />
+          <Metric icon={<Database />} value={String(procedureSources.length)} label="Sample source links" />
+          <Metric icon={<FileCheck2 />} value={String(totalSteps)} label="Sample steps" />
           <Metric
             icon={<GitCompareArrows />}
             value={state === "pending" ? "1" : "0"}
             label="Review pending"
           />
-          <Metric icon={<Activity />} value={validateGraph(steps.map((step) => step.id), dependencies).valid ? "Pass" : "Fail"} label="Graph validity" />
+          <Metric icon={<Activity />} value={graphsValid ? "Pass" : "Fail"} label="Graph validity" />
         </div>
         <div className="mt-8 grid gap-5 lg:grid-cols-[260px_1fr]">
           <aside className="card h-fit p-3">
@@ -140,7 +144,7 @@ export function AdminConsole() {
                 </div>
                 <div className="rounded-2xl border border-line p-5">
                   <p className="text-xs font-semibold text-muted">
-                    IMPACT ANALYSIS
+                    IMPACT ANALYSIS · FOOD-BUSINESS SAMPLE ONLY
                   </p>
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
                     <div className="rounded-xl bg-surface-2 p-3">
