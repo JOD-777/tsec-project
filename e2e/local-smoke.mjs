@@ -57,6 +57,8 @@ fs.mkdirSync(artifacts, { recursive: true });
   await page.goto(baseURL + '/demo?goal=Get%20a%20birth%20certificate');
   await page.getByRole('heading', { name: 'This goal needs a reviewed procedure.' }).waitFor();
   await page.goto(baseURL + '/demo');
+  // SSR renders form controls before their React change handlers are attached.
+  await page.waitForFunction(() => Object.keys(document.querySelector('select[aria-label="Where will you operate?"]') || {}).some(key => key.startsWith('__reactProps$')));
   await page.getByRole('combobox', { name: 'Where will you operate?' }).selectOption('commercial');
   await page.getByRole('radio', { name: 'Yes', exact: true }).check();
   await page.getByRole('button', { name: 'Compile my roadmap' }).click();
