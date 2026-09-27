@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CivicFlow AI
 
-## Getting Started
+**Government procedures, compiled into a roadmap.**
 
-First, run the development server:
+CivicFlow AI is a PSWB02 hackathon product that converts a citizen’s natural-language goal into a jurisdiction-aware, source-verifiable dependency graph. It is a workflow and provenance system—not a generic government chatbot.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## What works
+
+- Premium responsive landing page with English, Hindi and Marathi entry points
+- Offline-safe clarification and roadmap-generation demo
+- Interactive React Flow procedure graph with accessible list alternative
+- Evidence drawer with authority, source freshness and official outbound links
+- Progress tracking, next-best-action and reusable-document summary
+- Admin source-change diff, approval/rejection and versioning demonstration
+- Supabase SSR Auth integration, owner-scoped RLS and private storage policies
+- Server-only OpenRouter structured intent extraction with Zod and fallback
+- Dark/system themes, loading/error states and mobile layouts
+
+## Architecture
+
+```text
+Citizen intent → Jurisdiction → Source registry → Verified claims
+              → Dependency graph → Personal workflow → Change monitoring
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Next.js 16 + React 19 + TypeScript + Tailwind CSS 4 run on Vercel. Supabase provides Auth, PostgreSQL/RLS and Storage. OpenRouter is optional; the judge workflow is deterministic and survives provider or network failure.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Local setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
 
-## Learn More
+Open `http://localhost:3000`. No external credential is required for the complete seeded demo.
 
-To learn more about Next.js, take a look at the following resources:
+### Live Supabase
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create a dedicated project, then apply `supabase/migrations/20260927044508_civicflow_foundation.sql` and `supabase/seed.sql`. Set:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
 
-## Deploy on Vercel
+The service/secret key is server-only and is not required by the browser. See [database documentation](docs/DATABASE.md) and [RLS documentation](docs/RLS.md).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Live AI intent extraction
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Set `OPENROUTER_API_KEY` and a supported `OPENROUTER_FAST_MODEL` or `OPENROUTER_DEFAULT_MODEL`. `/api/intent` validates all input and output; failures automatically return the deterministic demo intent.
+
+## Quality gates
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+## Judge route
+
+Follow [docs/DEMO.md](docs/DEMO.md). The fastest entry is `/demo`; the full graph is at `/app/goals/home-food-business/roadmap`; validation is at `/admin`.
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [AI system](docs/AI_SYSTEM.md)
+- [Ingestion](docs/INGESTION.md)
+- [Security](docs/SECURITY.md)
+- [Design system](docs/DESIGN_SYSTEM.md)
+- [Testing](docs/TESTING.md)
+- [Deployment](docs/DEPLOYMENT.md)
+- [Hackathon pitch](docs/HACKATHON_PITCH.md)
+- [Implementation status](docs/IMPLEMENTATION_STATUS.md)
+
+## Known limitations
+
+Live crawling, PDFs, document upload, scheduled monitoring and notifications require a dedicated production Supabase project and worker infrastructure. The seeded Mumbai procedure is explicitly labelled as demonstration data and avoids presenting unreviewed legal claims as verified facts.
+
+## Disclaimer
+
+CivicFlow is not a government authority or legal adviser. Users must verify current requirements, fees, timelines and eligibility on the linked official source before acting.

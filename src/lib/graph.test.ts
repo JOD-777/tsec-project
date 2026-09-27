@@ -1,0 +1,3 @@
+import {describe,expect,it} from "vitest";import {dependencies,steps} from "./demo-data";import {evaluateRule,validateGraph} from "./graph";
+describe("procedure graph",()=>{it("keeps the seeded workflow acyclic and fully referenced",()=>{expect(validateGraph(steps.map(s=>s.id),dependencies)).toEqual({valid:true,errors:[]})});it("detects cycles",()=>{expect(validateGraph(["a","b"],[["a","b"],["b","a"]]).valid).toBe(false)})});
+describe("rule engine",()=>{it("evaluates nested deterministic conditions",()=>{expect(evaluateRule({all:[{field:"location.state",op:"eq",value:"Maharashtra"},{field:"business.turnover",op:"lte",value:2_000_000}]},{location:{state:"Maharashtra"},business:{turnover:500_000}})).toBe(true)})});

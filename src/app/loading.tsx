@@ -1,0 +1,1 @@
+export default function Loading(){return <div className="shell py-16" aria-label="Loading"><div className="h-4 w-32 animate-pulse rounded bg-surface-2"/><div className="mt-5 h-14 max-w-2xl animate-pulse rounded-2xl bg-surface-2"/><div className="mt-8 grid gap-4 md:grid-cols-3">{[1,2,3].map(x=><div key={x} className="h-48 animate-pulse rounded-3xl bg-surface-2"/>)}</div></div>}

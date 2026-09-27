@@ -1,0 +1,1 @@
+import {StaticPage} from "@/components/static-page";export default function Privacy(){return <StaticPage eyebrow="Privacy" title="Private by design." body="The demo does not require personal documents. A production deployment uses row-level security, private storage buckets, signed delivery and owner-scoped policies so citizen workflow data is not public."/>}
