@@ -53,10 +53,10 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
             </Link>
           ))}
         </nav>
-        <div className="flex shrink-0 items-center gap-2"><label className="hidden xl:block"><span className="sr-only">{t("Interface language")}</span><select className="field !w-auto !px-2 !py-2 text-xs" value={locale} onChange={(event) => updateDemo((current) => ({ ...current, locale: event.target.value as Locale }))}><option value="en">English</option><option value="hi">हिंदी</option><option value="mr">मराठी</option></select></label>
-          <button className="grid size-9 shrink-0 place-items-center rounded-full border border-line bg-surface" aria-label={t("Search CivicFlow")} aria-keyshortcuts="Control+k Meta+k" onClick={() => window.dispatchEvent(new Event("civicflow:open-search"))}><Search size={17} /></button>
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2"><label className="hidden xl:block"><span className="sr-only">{t("Interface language")}</span><select className="field !w-auto !px-2 !py-2 text-xs" value={locale} onChange={(event) => updateDemo((current) => ({ ...current, locale: event.target.value as Locale }))}><option value="en">English</option><option value="hi">हिंदी</option><option value="mr">मराठी</option></select></label>
+          <button className="hidden size-9 shrink-0 place-items-center rounded-full border border-line bg-surface min-[360px]:grid" aria-label={t("Search CivicFlow")} aria-keyshortcuts="Control+k Meta+k" onClick={() => window.dispatchEvent(new Event("civicflow:open-search"))}><Search size={17} /></button>
           <button
-            className="grid size-11 shrink-0 place-items-center rounded-full border border-line bg-surface"
+            className="hidden size-11 shrink-0 place-items-center rounded-full border border-line bg-surface min-[420px]:grid"
             onClick={() =>
               setTheme(resolvedTheme === "dark" ? "light" : "dark")
             }
@@ -81,6 +81,12 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
       </div>
       {open && (
         <nav id="mobile-navigation" aria-label={t("Mobile navigation")} onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); setOpen(false); menuButton.current?.focus(); } }} className="shell grid max-h-[calc(100dvh-4rem)] gap-1 overflow-y-auto border-t border-line py-3 lg:hidden">
+          <div className="mb-2 grid grid-cols-2 gap-2 border-b border-line pb-3">
+            <button className="button-secondary !justify-start text-sm" onClick={() => { setOpen(false); window.dispatchEvent(new Event("civicflow:open-search")); }}><Search size={16} />{t("Search")}</button>
+            <button className="button-secondary !justify-start text-sm" onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}>
+              {resolvedTheme === "dark" ? <Sun size={16} /> : <Moon size={16} />}{t("Theme")}
+            </button>
+          </div>
           {navItems.map((item) => (
             <Link
               onClick={() => setOpen(false)}

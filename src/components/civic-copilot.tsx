@@ -16,13 +16,26 @@ import {
 import { useWorkflowDemo } from "@/lib/local-demo";
 import { getProcedure } from "@/lib/procedures";
 import { copilotProcedure, localCopilotAnswer } from "@/lib/copilot-context";
+import {
+  Message as AIMessage,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
 
-type Message = { role: "assistant" | "user"; text: string; meta?: string; question?: string };
-const starter: Message = {
-  role: "assistant",
-  text: "I can explain this roadmap, surface the next action, and show which claims still need official verification.",
-  meta: "Sample-context assistant",
-};
+type Message = { role: "assistant" | "user"; text: string; meta?: string };
+function starterMessage(hasProcedure: boolean): Message {
+  return hasProcedure
+    ? {
+        role: "assistant",
+        text: "I can explain this roadmap, surface the next action, and show which claims still need official verification.",
+        meta: "Sample-context assistant",
+      }
+    : {
+        role: "assistant",
+        text: "Tell me which civic service you need. I’ll route you to a supported procedure and keep official sources separate from guidance.",
+        meta: "Service catalogue assistant",
+      };
+}
 const prompts = [
   "What should I do next?",
   "Which documents can I reuse?",
@@ -41,7 +54,7 @@ function CopilotSession({ pathname, procedureId }: { pathname: string; procedure
   const { t, locale } = useTranslation();
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState("");
-  const [messages, setMessages] = useState<Message[]>([starter]);
+  const [messages, setMessages] = useState<Message[]>([starterMessage(Boolean(procedureId))]);
   const [loading, setLoading] = useState(false);
   const demo = useWorkflowDemo(procedureId ?? "home-food-business");
   const requestRef = useRef<AbortController | null>(null);
@@ -80,7 +93,7 @@ function CopilotSession({ pathname, procedureId }: { pathname: string; procedure
     try {
       const answer = localCopilotAnswer(clean, procedureId ? demo.workflow : undefined, locale);
       if (answer) {
-        setMessages((current) => [...current, { role: "assistant", text: answer, question: clean, meta: procedureId ? "Current browser-local demo state" : "Service catalogue context" }]);
+        setMessages((current) => [...current, { role: "assistant", text: answer, meta: procedureId ? "Current browser-local demo state" : "Service catalogue context" }]);
         return;
       }
       const response = await fetch("/api/copilot", {
@@ -123,6 +136,18 @@ function CopilotSession({ pathname, procedureId }: { pathname: string; procedure
     event.preventDefault();
     void ask(question);
   }
+  function closePanel() {
+    setOpen(false);
+    launcherRef.current?.focus({ preventScroll: true });
+  }
+  function resetConversation() {
+    requestRef.current?.abort();
+    requestRef.current = null;
+    setLoading(false);
+    setQuestion("");
+    setMessages([starterMessage(Boolean(procedureId))]);
+    inputRef.current?.focus({ preventScroll: true });
+  }
   return (
     <>
       <button
@@ -132,42 +157,50 @@ function CopilotSession({ pathname, procedureId }: { pathname: string; procedure
         className={`copilot-launcher ${open ? "pointer-events-none scale-90 opacity-0" : ""}`}
         aria-label={t("Open CivicFlow Copilot")}
       >
-        <span className="absolute inset-0 animate-ping rounded-full bg-accent/20" />
+        <span className="absolute inset-0 animate-pulse rounded-full bg-accent/20" />
         <Sparkles size={20} />
         <span className="hidden sm:inline">{t("Ask CivicFlow")}</span>
         <span className="absolute -right-1 -top-1 size-3 rounded-full border-2 border-background bg-emerald-400" />
       </button>
+      <div
+        aria-hidden="true"
+        onClick={closePanel}
+        className={`copilot-backdrop ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}
+      />
       <aside
         ref={panelRef}
         onKeyDown={(event) => {
-          if (event.key !== "Tab" || !window.matchMedia("(max-width: 640px)").matches) return;
+          if (event.key !== "Tab") return;
           const controls = [...(panelRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), textarea, a[href], input:not(:disabled)') ?? [])].filter((element) => element.offsetParent !== null);
           const first = controls[0], last = controls[controls.length - 1];
           if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
           else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
         }}
         className={`copilot-panel ${open ? "translate-y-0 opacity-100 sm:translate-x-0" : "pointer-events-none translate-y-8 opacity-0 sm:translate-x-8 sm:translate-y-0"}`}
+        data-open={open}
         aria-hidden={!open}
         inert={!open}
-        aria-label={t("CivicFlow Copilot")}
+        aria-labelledby="copilot-title"
+        aria-modal="true"
+        role="dialog"
       >
-        <header className="flex items-center justify-between border-b border-line px-5 py-4">
+        <header className="flex shrink-0 items-center justify-between border-b border-line px-4 py-3.5 sm:px-5 sm:py-4">
           <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-2xl bg-brand text-white">
+            <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand text-white">
               <Bot size={19} />
             </span>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h2 className="font-semibold">{t("CivicFlow Copilot")}</h2>
-                <span className="size-2 rounded-full bg-emerald-500" />
+                <h2 id="copilot-title" className="truncate font-semibold">{t("CivicFlow Copilot")}</h2>
+                <span className="size-2 shrink-0 rounded-full bg-emerald-500" />
               </div>
-              <p className="text-[11px] text-muted">
+              <p className="truncate text-[11px] text-muted">
                 {t(procedureId ? getProcedure(procedureId)!.title : "Explore the service catalogue")}
               </p>
             </div>
           </div>
           <button
-            onClick={() => { setOpen(false); launcherRef.current?.focus({ preventScroll: true }); }}
+            onClick={closePanel}
             className="icon-button"
             aria-label={t("Close CivicFlow Copilot")}
           >
@@ -175,24 +208,29 @@ function CopilotSession({ pathname, procedureId }: { pathname: string; procedure
           </button>
         </header>
         <div className="flex min-h-0 flex-1 flex-col">
-          <div role="log" aria-label={t("Assistant conversation")} aria-live="polite" className="flex-1 space-y-4 overflow-y-auto p-5">
+          <div role="log" aria-label={t("Assistant conversation")} aria-live="polite" className="copilot-transcript flex-1 space-y-3 overflow-y-auto p-4 sm:p-5">
             {messages.map((message, index) => (
-              <div
+              <AIMessage
+                from={message.role}
                 key={`${message.role}-${index}`}
-                className={message.role === "user" ? "ml-10" : "mr-5"}
+                className={message.role === "user" ? "ml-8" : "mr-3"}
               >
-                <div
-                  className={`rounded-2xl px-4 py-3 text-sm leading-6 ${message.role === "user" ? "rounded-br-sm bg-brand text-white" : "rounded-bl-sm border border-line bg-surface-2"}`}
+                <MessageContent
+                  className={`!rounded-2xl !px-3.5 !py-2.5 text-sm leading-6 ${message.role === "user" ? "!rounded-br-sm !bg-brand !text-white" : "!rounded-bl-sm border border-line !bg-surface-2"}`}
                 >
-                  <p className="whitespace-pre-line break-words [overflow-wrap:anywhere]">{message.question ? localCopilotAnswer(message.question, procedureId ? demo.workflow : undefined, locale) ?? message.text : t(message.text)}</p>
-                </div>
+                  {message.role === "assistant" ? (
+                    <MessageResponse className="break-words [overflow-wrap:anywhere]">{t(message.text)}</MessageResponse>
+                  ) : (
+                    <p className="whitespace-pre-line break-words [overflow-wrap:anywhere]">{message.text}</p>
+                  )}
+                </MessageContent>
                 {message.meta ? (
                   <p className="mt-1.5 flex items-center gap-1.5 px-1 text-[10px] text-muted">
                     <ShieldCheck size={11} />
                     {t(message.meta)}
                   </p>
                 ) : null}
-              </div>
+              </AIMessage>
             ))}
             {loading ? (
               <div className="mr-16 rounded-2xl rounded-bl-sm border border-line bg-surface-2 px-4 py-3">
@@ -215,7 +253,7 @@ function CopilotSession({ pathname, procedureId }: { pathname: string; procedure
               ))}
             </div>
           ) : null}
-          <div className="border-t border-line bg-surface/90 p-4">
+          <div className="shrink-0 border-t border-line bg-surface/95 p-3 sm:p-4">
             <form
               onSubmit={submit}
               className="flex items-end gap-2 rounded-2xl border border-line bg-background p-2 focus-within:border-brand"
@@ -234,10 +272,17 @@ function CopilotSession({ pathname, procedureId }: { pathname: string; procedure
                 }}
                 rows={1}
                 maxLength={600}
+                autoComplete="off"
+                data-gramm="false"
+                data-gramm_editor="false"
+                data-enable-grammarly="false"
+                data-lt-active="false"
+                data-ms-editor="false"
                 placeholder={t("Ask about this civic path…")}
-                className="max-h-28 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
+                className="copilot-input max-h-24 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
               />
               <button
+                type="submit"
                 disabled={question.trim().length < 3 || loading}
                 className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand text-white transition disabled:opacity-40"
                 aria-label={t("Send question")}
@@ -249,8 +294,9 @@ function CopilotSession({ pathname, procedureId }: { pathname: string; procedure
               <span className="flex items-center gap-1">
                 <CheckCircle2 size={11} /> {t("No AI claim is treated as official")} </span>
               <button
+                type="button"
                 disabled={loading}
-                onClick={() => setMessages([starter])}
+                onClick={resetConversation}
                 className="flex items-center gap-1 hover:text-foreground"
               >
                 <Minimize2 size={11} /> {t("Reset")} </button>

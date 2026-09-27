@@ -8,6 +8,8 @@ describe("remaining frontend flows", () => {
   it("does not substitute food context on general or unknown routes", () => {
     for (const route of ["/", "/app", "/admin", "/services", "/app/goals/unknown/roadmap"]) expect(copilotProcedure(route, null)).toBeNull();
     expect(localCopilotAnswer("What should I do next?")).toContain("Choose a service");
+    expect(localCopilotAnswer("dfsfsf")).not.toContain("Available samples");
+    expect(localCopilotAnswer("I need a birth certificate")).toContain("birth certificate sample");
   });
   it("resolves service details, intake and roadmap tools consistently", () => {
     expect(copilotProcedure("/services/birth-certificate", null)).toBe("birth-certificate");

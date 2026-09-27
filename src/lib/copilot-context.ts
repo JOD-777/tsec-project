@@ -1,5 +1,5 @@
 import { phraseTranslations, translateText, type Language } from "./translations";
-import { getProcedure, procedureSources, procedures, resolveProcedure } from "./procedures";
+import { getProcedure, procedureSources, resolveProcedure } from "./procedures";
 import { documentChecklist, workflowGraph, workflowSummary, type Workflow } from "./workflow";
 
 export function copilotProcedure(pathname: string, goal: string | null): string | null {
@@ -13,7 +13,16 @@ export function copilotProcedure(pathname: string, goal: string | null): string 
 export function localCopilotAnswer(question: string, workflow?: Workflow, locale: Language = "en"): string | null {
   const t = (text: string, values?: Record<string, string | number>) => translateText(locale, text, values);
   const canonical = Object.entries(phraseTranslations).find(([, translations]) => translations.includes(question))?.[0] ?? question;
-  if (!workflow) return t("Choose a service to get procedure-specific guidance. Available samples: {services}. Explore services for requirements or Try the demo to build a browser-local roadmap.", { services: procedures.map((procedure) => `${t(procedure.title)} (${t(procedure.jurisdiction)})`).join("; ") });
+  if (!workflow) {
+    const matched = resolveProcedure(canonical);
+    if (matched) {
+      return t("I found the {service} sample for {jurisdiction}. Open Explore services to review its steps and official portals, or Try the demo to build a browser-local roadmap.", {
+        service: t(matched.title),
+        jurisdiction: t(matched.jurisdiction),
+      });
+    }
+    return t("Choose a service before asking for procedure-specific guidance. You can explore all six samples, or try a home food business, birth certificate, or Udyam registration roadmap.");
+  }
   const { items } = workflowGraph(workflow);
   const summary = workflowSummary(workflow);
   const procedure = getProcedure(workflow.procedureId)!;
