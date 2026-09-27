@@ -2,6 +2,23 @@
 
 Updated: 27 September 2026
 
+## Service workflows and demo hub
+
+Scope: complete the existing six service cards as browser-local sample workflows, following the PS's procedure/dependency visualizer and the master prompt's service-detail, deterministic demo and execution requirements. Preserve the team's existing design and food workflow. Authentication, shared backend and remote database remain untouched. Push to `main` only after the user's requested verification passes.
+
+- Service detail content is centered in a bounded column, including the procedure overview and step list.
+- `/services` leads to informational procedure pages, rather than duplicating the demo chooser. All six “View procedure details” links have a corresponding `/services/[slug]` page with scope, jurisdiction, procedure steps, preparation checklist, eligibility/fee notes and official sources.
+- `/demo` opens a scenario chooser. It supports the original Mumbai food business plus Mumbai birth-certificate copies, India Udyam MSME registration, Maharashtra driving-licence renewal, property transaction document registration and co-operative society formation.
+- Each new service has its own intake questions and conditional titles or branches. Jurisdiction is explicitly confirmed before compilation. Unknown goals are not silently converted into another procedure.
+- Graph dependencies, available actions, progress, optional tasks, reopening, notes and reusable preparation checklists work through the shared workflow engine. The original eight food step IDs and nine edges are retained.
+- Each service has isolated local state; building one replaces only that service's sample. Earlier food-only storage is automatically accepted without losing progress, locale or review decisions.
+- The dashboard lists saved service roadmaps. Assistant execution answers use the open roadmap; non-food service questions use that service's deterministic context instead of the existing food-only AI endpoint.
+- New procedures render without credentials or external AI. Existing optional food-intent integration retains its fallback. Official links accompany clearly labelled sample planning requirements.
+- React Flow uses a matching initial server/client colour mode, then applies the selected theme after hydration.
+- No dependency/package updates, shared backend changes, API-contract changes or new personal names/usernames are included.
+
+Validation: lint, strict typecheck, 46 unit tests, the Webpack production build and both browser suites pass. The service suite also passes against the production build. No unexpected browser console errors were observed. Automated unit coverage checks every combination of the new intake options, graph validity, blocked-step guards, required completion, reopening, source references, service isolation and migration of earlier saved state. Browser checks cover actual service-detail links/content, all six intakes, completion/notes/reload, context-aware assistant, dashboard entries, five viewport sizes, graph rendering and dark-theme hydration.
+
 ## Local reliability and responsive repair plan
 
 Scope: repair existing user journeys using the master build prompt's P0 acceptance criteria. Preserve existing content and attribution. No new personal names, remote backend changes, deployment, commits or pushes.

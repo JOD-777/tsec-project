@@ -54,13 +54,14 @@ fs.mkdirSync(artifacts, { recursive: true });
   await page.getByText('approved', { exact: true }).waitFor();
   await page.goto(baseURL + '/app');
   await page.getByText(/synthetic source change was approved/).waitFor();
-  await page.goto(baseURL + '/demo?goal=Get%20a%20birth%20certificate');
-  await page.getByRole('heading', { name: 'This goal needs a reviewed procedure.' }).waitFor();
-  await page.goto(baseURL + '/demo');
+  await page.goto(baseURL + '/demo?goal=Get%20a%20passport');
+  await page.getByRole('heading', { name: 'This goal needs another procedure.' }).waitFor();
+  await page.goto(baseURL + '/demo?goal=home-food-business');
   // SSR renders form controls before their React change handlers are attached.
   await page.waitForFunction(() => Object.keys(document.querySelector('select[aria-label="Where will you operate?"]') || {}).some(key => key.startsWith('__reactProps$')));
   await page.getByRole('combobox', { name: 'Where will you operate?' }).selectOption('commercial');
   await page.getByRole('radio', { name: 'Yes', exact: true }).check();
+  await page.getByRole('checkbox', { name: /Use the Mumbai, Maharashtra sample jurisdiction/ }).check();
   await page.getByRole('button', { name: 'Compile my roadmap' }).click();
   await page.getByRole('link', { name: 'Open interactive roadmap' }).click();
   await page.getByRole('heading', { name: 'Check commercial premises permissions', exact: true }).waitFor();

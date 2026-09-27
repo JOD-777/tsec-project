@@ -12,7 +12,8 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { useLocalDemo } from "@/lib/local-demo";
+import { useWorkflowDemo } from "@/lib/local-demo";
+import { getProcedure } from "@/lib/procedures";
 import { documentChecklist, workflowSummary } from "@/lib/workflow";
 
 type Message = { role: "assistant" | "user"; text: string; meta?: string };
@@ -33,7 +34,9 @@ export function CivicCopilot() {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([starter]);
   const [loading, setLoading] = useState(false);
-  const demo = useLocalDemo();
+  const routeId = pathname.startsWith("/services/") ? pathname.split("/")[2] : pathname.split("/")[3];
+  const procedureId = getProcedure(routeId)?.id ?? "home-food-business";
+  const demo = useWorkflowDemo(procedureId);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -73,6 +76,14 @@ export function CivicCopilot() {
           ? `Your sample checklist has ${checklist.filter((document) => document.ready).length} of ${checklist.length} documents marked prepared. Still to prepare: ${checklist.filter((document) => !document.ready).map((document) => document.name).join(", ") || "none"}. These are planning examples, not verified portal requirements.`
           : `Current sample progress: ${summary.done}/${summary.required} required steps complete. ${summary.next ? `Next: ${summary.next.title}. Ready actions: ${summary.ready.map((step) => step.title).join("; ")}. Other steps unlock after their prerequisites are complete.` : "All required sample steps are complete; confirm outstanding official requirements with the relevant authority."} Verify procedural requirements using the roadmap’s official portal links.`;
         setMessages((current) => [...current, { role: "assistant", text: answer, meta: "Current browser-local demo state" }]);
+        return;
+      }
+      if (procedureId !== "home-food-business") {
+        const procedure = getProcedure(procedureId)!;
+        const summary = workflowSummary(demo.workflow);
+        const step = summary.items.find((item) => clean.toLowerCase().includes(item.title.toLowerCase()));
+        const answer = step ? `${step.title}: ${step.description}` : `${procedure.title} (${procedure.jurisdiction}): ${procedure.description} Open a step to see its official source link. This sample tracks planning progress; current eligibility, fees and approval are confirmed by the authority.`;
+        setMessages((current) => [...current, { role: "assistant", text: answer, meta: "Current service sample context" }]);
         return;
       }
       const response = await fetch("/api/copilot", {

@@ -40,7 +40,7 @@ describe("local workflow execution", () => {
     expect(workflowSchema.safeParse({ ...compileWorkflow(defaultAnswers), completed: ["invented"] }).success).toBe(false);
   });
   it("does not silently substitute an unrelated task or another known city", () => {
-    expect(supportsDemoGoal("Get a birth certificate")).toBe(false);
+    expect(supportsDemoGoal("Get a birth certificate")).toBe(true);
     expect(supportsDemoGoal("Start a food business in Pune")).toBe(false);
     expect(supportsDemoGoal("Start a cloud kitchen in Mumbai")).toBe(true);
   });

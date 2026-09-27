@@ -17,8 +17,10 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
-import { useLocalDemo, updateDemo } from "@/lib/local-demo";
-import { compileWorkflow, supportsDemoGoal, type Answers } from "@/lib/workflow";
+import { useWorkflowDemo, updateWorkflow } from "@/lib/local-demo";
+import { defaultProfile, resolveProcedure, type Procedure, type Profile } from "@/lib/procedures";
+import { ServiceCards } from "@/components/service-cards";
+import { compileProcedure, compileWorkflow, workflowSummary, type Answers } from "@/lib/workflow";
 
 const pipeline = [
   "Understanding your goal",
@@ -46,9 +48,19 @@ type Intent = {
 
 export function DemoFlow() {
   const params = useSearchParams();
-  const goal = params.get("goal") || "Start a home food business in Mumbai";
-  const supported = supportsDemoGoal(goal);
-  const demo = useLocalDemo();
+  const goal = params.get("goal");
+  if (!goal) return <div className="min-h-screen"><SiteHeader compact /><main id="main-content" className="shell pb-28 pt-12"><p className="eyebrow">Try the demo</p><h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-6xl">Choose a sample to try.</h1><p className="mt-4 max-w-2xl text-muted">See how CivicFlow works: answer questions, build a roadmap and complete a step. No login is needed, and sample progress stays in this browser.</p><Link href="/services" className="mt-4 inline-flex min-h-11 items-center gap-1 text-sm text-brand">Looking for service requirements? Browse services <ArrowRight size={15} /></Link><ServiceCards mode="demo" /></main></div>;
+  const procedure = resolveProcedure(goal);
+  if (!procedure) return <div className="min-h-screen"><SiteHeader compact /><main id="main-content" className="shell py-12"><section className="card mx-auto max-w-2xl p-6"><p className="eyebrow">Procedure coverage</p><h1 className="mt-3 text-3xl font-semibold">This goal needs another procedure.</h1><p className="mt-4 break-words text-sm text-muted">Your goal: “{goal.slice(0, 500)}”</p><p className="mt-4 text-sm text-muted">Choose a isFood sample and confirm its jurisdiction before building a roadmap.</p><Link href="/demo" className="button-primary mt-6">Explore sample workflows <ArrowRight size={16} /></Link></section></main></div>;
+  return <DemoIntake key={procedure.id + goal} goal={goal === procedure.id ? `${procedure.title} in ${procedure.jurisdiction}` : goal} procedure={procedure} />;
+}
+
+function DemoIntake({ goal, procedure }: { goal: string; procedure: Procedure }) {
+  const isFood = procedure.id === "home-food-business";
+  const demo = useWorkflowDemo(procedure.id);
+  const [draftProfile, setDraftProfile] = useState<Profile | null>(null);
+  const profile = draftProfile ?? { ...defaultProfile(procedure), ...demo.workflow.profile };
+  const [jurisdictionConfirmed, setJurisdictionConfirmed] = useState(false);
   const [draft, setDraft] = useState<Answers | null>(null);
   const answers = draft ?? demo.workflow.answers;
   const [stage, setStage] = useState<"questions" | "building" | "ready">(
@@ -57,7 +69,7 @@ export function DemoFlow() {
   const [progress, setProgress] = useState(0);
   const [intent, setIntent] = useState<Intent | null>(null);
   const [intentState, setIntentState] = useState<"loading" | "ready" | "error">(
-    "loading",
+    isFood ? "loading" : "ready",
   );
   const fetchIntent = useCallback(async () => {
     try {
@@ -79,7 +91,7 @@ export function DemoFlow() {
     void fetchIntent();
   };
   useEffect(() => {
-    if (!supported) return;
+    if (!isFood) return;
     const controller = new AbortController();
     fetch("/api/intent", {
       method: "POST",
@@ -100,7 +112,7 @@ export function DemoFlow() {
           setIntentState("error");
       });
     return () => controller.abort();
-  }, [goal, supported]);
+  }, [goal, isFood]);
   useEffect(() => {
     if (stage !== "building") return;
     const id = window.setInterval(
@@ -117,17 +129,7 @@ export function DemoFlow() {
     );
     return () => window.clearInterval(id);
   }, [stage]);
-  const location = intent
-    ? [
-        intent.jurisdictionHints.country,
-        intent.jurisdictionHints.state,
-        intent.jurisdictionHints.city,
-        intent.jurisdictionHints.localBody,
-      ]
-        .filter(Boolean)
-        .join(" / ")
-    : "Resolving jurisdiction…";
-  if (!supported) return <div className="min-h-screen"><SiteHeader compact /><main id="main-content" className="shell py-12"><Link href="/services" className="text-sm text-brand">← Explore services</Link><section className="card mx-auto mt-6 max-w-2xl p-6 sm:p-8"><p className="eyebrow">Procedure coverage</p><h1 className="mt-3 text-3xl font-semibold">This goal needs a reviewed procedure.</h1><p className="mt-4 break-words text-sm text-muted">Your goal: “{goal.slice(0, 500)}”</p><p className="mt-4 text-sm leading-6 text-muted">The local catalogue currently contains a Mumbai food-business sample. It cannot generate a reliable procedure for this goal or another city. You can explore the sample without treating it as guidance for your task.</p><Link className="button-primary mt-6" href="/demo?goal=Start%20a%20home%20food%20business%20in%20Mumbai">Try the Mumbai sample <ArrowRight size={16} /></Link></section></main></div>;
+  const location = procedure.jurisdiction;
   return (
     <div className="min-h-screen">
       <SiteHeader compact />
@@ -163,7 +165,7 @@ export function DemoFlow() {
                     Interpreted goal
                   </p>
                   <p className="mt-2 text-lg font-semibold">
-                    “{intent?.normalizedGoal || goal}”
+                    “{isFood ? intent?.normalizedGoal || goal : procedure.title}”
                   </p>
                   <div className="mt-2 flex items-center gap-2 text-sm text-brand">
                     <MapPin size={15} />
@@ -171,11 +173,11 @@ export function DemoFlow() {
                   </div>
                 </div>
               </div>
-              <IntentStatus
+              {isFood ? <IntentStatus
                 state={intentState}
                 intent={intent}
                 onRetry={retryIntent}
-              />
+              /> : <p className="mt-4 text-xs text-muted">Deterministic sample · works without AI or backend credentials</p>}
             </div>
             <div className="p-5 md:p-8">
               {stage === "questions" ? (
@@ -187,6 +189,7 @@ export function DemoFlow() {
                       Personal documents are not needed for this demo.
                     </p>
                   </div>
+                  {isFood ? <>
                   <Question
                     label="Where will you operate?"
                     hint="This selects the applicable municipal authority."
@@ -221,17 +224,21 @@ export function DemoFlow() {
                       </label>
                     </div>
                   </Question>
+                  </> : procedure.questions.map((question) => <Question key={question.id} label={question.label} hint="Your answer personalizes this sample roadmap."><select className="field mt-2" aria-label={question.label} value={profile[question.id]} onChange={(event) => setDraftProfile({ ...profile, [question.id]: event.target.value })}>{question.options.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Question>)}
+                  <p className="text-sm leading-6 text-muted">{procedure.description}</p>
+                  <label className="flex min-h-11 items-start gap-3 text-sm"><input className="mt-1 accent-brand" type="checkbox" checked={jurisdictionConfirmed} onChange={(event) => setJurisdictionConfirmed(event.target.checked)} /><span>Use the {procedure.jurisdiction} sample jurisdiction.</span></label>
                   <button
-                    className="button-primary w-full"
+                    className="button-primary w-full disabled:opacity-50"
+                    disabled={!jurisdictionConfirmed}
                     onClick={() => {
-                      updateDemo((current) => ({ ...current, workflow: compileWorkflow(answers) }));
+                      updateWorkflow(procedure.id, () => isFood ? compileWorkflow(answers) : compileProcedure(procedure.id, profile));
                       setProgress(0);
                       setStage("building");
                     }}
                   >
                     Compile my roadmap <ArrowRight size={17} />
                   </button>
-                  <p className="text-xs leading-5 text-muted">Creates a fresh browser-local sample using your answers. Existing sample progress will be replaced. Activity and premises are planning inputs, not verified eligibility decisions.</p>
+                  <p className="text-xs leading-5 text-muted">Creates a fresh browser-local sample using your answers. Only this service’s sample progress will be replaced. Other saved roadmaps are preserved.</p>
                 </div>
               ) : null}
               {stage === "building" ? (
@@ -286,13 +293,12 @@ export function DemoFlow() {
                     Your roadmap is ready
                   </h2>
                   <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-muted">
-                    8 steps · 4 official portals · 2 parallel paths · every
-                    requirement is labelled as sample data.
+                    {workflowSummary(demo.workflow).items.length} steps · personalized dependencies · browser-local progress.
                   </p>
                   <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
                     <Link
                       className="button-primary"
-                      href="/app/goals/home-food-business/roadmap"
+                      href={`/app/goals/${procedure.id}/roadmap`}
                     >
                       Open interactive roadmap <ArrowRight size={17} />
                     </Link>
