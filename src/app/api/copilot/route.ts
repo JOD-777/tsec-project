@@ -3,6 +3,7 @@ import { generateText } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { sources, steps } from "@/lib/demo-data";
+import { isSafeAssistantAnswer } from "@/lib/ai-response";
 
 export const maxDuration = 30;
 
@@ -61,9 +62,19 @@ export async function POST(request: Request) {
     });
     const modelId =
       process.env.OPENROUTER_COPILOT_MODEL ||
-      "nvidia/nemotron-3-super-120b-a12b:free";
+      "poolside/laguna-xs-2.1:free";
+    const fallbackModels = [
+      modelId,
+      "google/gemma-4-31b-it:free",
+      "google/gemma-4-26b-a4b-it:free",
+      "openrouter/free",
+    ].filter((model, index, models) => models.indexOf(model) === index);
     const result = await generateText({
-      model: openrouter(modelId),
+      model: openrouter(modelId, {
+        models: fallbackModels,
+        reasoning: { effort: "none", exclude: true },
+        usage: { include: true },
+      }),
       instructions: `You are CivicFlow Copilot, a concise civic-navigation assistant. Answer only from the supplied seeded demonstration context. Never invent laws, fees, timelines, eligibility, documents, offices, or approvals. Clearly label uncertainty. Never claim to be a government authority. Keep answers under 130 words, use short bullets when helpful, and end with the exact official source the user should verify when one is relevant. Current page: ${parsed.data.pathname || "unknown"}.\n\nVERIFIED DEMO CONTEXT:\n${context}`,
       prompt: parsed.data.question,
       temperature: 0.2,
@@ -71,8 +82,7 @@ export async function POST(request: Request) {
       abortSignal: AbortSignal.timeout(22_000),
     });
     const answer = result.text.trim();
-    const unusable =
-      answer.length < 24 || /^(user safety|safe|unsafe)[:\s]/i.test(answer);
+    const unusable = !isSafeAssistantAnswer(answer, result.finishReason);
     const model = result.finalStep.response.modelId || modelId;
     return NextResponse.json({
       answer: unusable ? safeFallback(parsed.data.question) : answer,
