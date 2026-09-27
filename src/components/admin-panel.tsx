@@ -1,0 +1,22 @@
+"use client";
+
+import Link from "next/link";
+import { ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { dependencies, sources, steps } from "@/lib/demo-data";
+import { validateGraph } from "@/lib/graph";
+import { useLocalDemo } from "@/lib/local-demo";
+
+export function AdminPanel({ active }: { active: string }) {
+  const demo = useLocalDemo();
+  const [evaluated, setEvaluated] = useState(false);
+  const graph = validateGraph(steps.map((step) => step.id), dependencies);
+  return <section className="card min-w-0 p-5 sm:p-6" aria-label={`${active} demo workspace`}><p className="eyebrow">Browser-local demonstration</p><h2 className="mt-2 text-2xl font-semibold">{active}</h2>
+    {active === "Overview" && <div className="mt-6 space-y-4 text-sm leading-6"><p>{sources.length} official portal links, {steps.length} sample planning steps and {dependencies.length} dependency edges are available in the local catalogue.</p><p>Source review: <b>{demo.review}</b>. Current demonstration version: <b>{demo.review === "approved" ? "v1.4" : "v1.3"}</b>.</p><p className="text-muted">Live crawling, authoritative snapshots and backend validation are not connected in this local demo. No production health metric is implied.</p><Link href="/app/goals/home-food-business/roadmap" className="button-secondary">Inspect sample roadmap</Link></div>}
+    {active === "Sources" && <div className="mt-6 grid gap-4 sm:grid-cols-2">{sources.map((source) => <article className="rounded-xl border border-line p-4" key={source.id}><h3 className="font-semibold">{source.title}</h3><p className="mt-2 text-xs leading-5 text-muted">{source.authority}</p><p className="mt-3 text-xs text-muted">Sample metadata; no captured snapshot.</p><a href={source.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-brand">Open official portal <ExternalLink size={14} /></a></article>)}</div>}
+    {active === "Claims" && <div className="mt-6 space-y-3">{steps.map((step) => <article className="rounded-xl border border-line p-4" key={step.id}><h3 className="font-semibold">{step.title}</h3><p className="mt-2 text-sm leading-6 text-muted">{step.description}</p><span className="badge mt-3">Not verified from an official source</span><p className="mt-2 text-xs text-muted">Seeded planning example · authority reference: {step.agency}</p></article>)}</div>}
+    {active === "Procedures" && <article className="mt-6 rounded-xl border border-line p-5"><span className="badge">Sample procedure {demo.review === "approved" ? "v1.4" : "v1.3"}</span><h3 className="mt-4 text-xl font-semibold">Start a home food business in Mumbai</h3><p className="mt-3 text-sm leading-6 text-muted">{steps.length} steps, {dependencies.length} dependency edges, one optional branch. Review decisions change the local demo version without deleting progress.</p><Link href="/app/goals/home-food-business/roadmap" className="button-primary mt-5">Open procedure graph</Link></article>}
+    {active === "Evaluations" && <div className="mt-6 space-y-4"><p className="text-sm leading-6 text-muted">Run deterministic checks on this catalogue. These checks assess graph integrity, not legal correctness or AI accuracy.</p><button className="button-primary" onClick={() => setEvaluated(true)}>Run graph checks</button>{evaluated && <ul aria-live="polite" className="space-y-3 rounded-xl border border-line p-4 text-sm"><li>Graph references and acyclicity: <b>{graph.valid ? "Pass" : "Fail"}</b></li><li>Step source IDs: <b>{steps.every((step) => sources.some((source) => source.id === step.sourceId)) ? "Pass" : "Fail"}</b></li><li>Official links use HTTPS: <b>{sources.every((source) => source.url.startsWith("https://")) ? "Pass" : "Fail"}</b></li>{graph.errors.map((error) => <li key={error}>{error}</li>)}</ul>}</div>}
+    {active === "Audit log" && <div className="mt-6">{demo.audit.length === 0 ? <p className="text-sm text-muted">No local review decisions yet. Approve or reject the synthetic change to create a demo audit entry.</p> : <ol className="space-y-3">{demo.audit.toReversed().map((entry, index) => <li key={`${entry.at}-${index}`} className="rounded-xl border border-line p-4"><p className="text-sm font-semibold">{entry.action}</p><time dateTime={entry.at} className="mt-2 block text-xs text-muted">{new Date(entry.at).toLocaleString()}</time></li>)}</ol>}<p className="mt-5 text-xs text-muted">Demo events are stored only in this browser. This is not a server audit trail.</p></div>}
+  </section>;
+}

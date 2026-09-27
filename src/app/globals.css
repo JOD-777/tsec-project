@@ -72,7 +72,9 @@ select {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--brand) 55%, transparent);
   outline-offset: 3px;
 }
@@ -99,6 +101,7 @@ select:focus-visible {
   font-weight: 650;
 }
 .card {
+  min-width: 0;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   border: 1px solid var(--line);
   border-radius: 1.35rem;
@@ -168,6 +171,7 @@ select:focus-visible {
   text-wrap: balance;
 }
 .field {
+  min-width: 0;
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 0.9rem;
@@ -233,7 +237,7 @@ select:focus-visible {
   z-index: 80;
   display: flex;
   width: min(410px, calc(100vw - 2rem));
-  height: min(690px, calc(100vh - 2rem));
+  height: min(690px, calc(100dvh - 2rem));
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -261,15 +265,50 @@ select:focus-visible {
 @media (max-width: 640px) {
   .copilot-launcher {
     right: 1rem;
-    bottom: 1rem;
+    bottom: max(1rem, env(safe-area-inset-bottom));
   }
   .copilot-panel {
     right: 0.5rem;
-    bottom: 0.5rem;
+    bottom: max(0.5rem, env(safe-area-inset-bottom));
     width: calc(100vw - 1rem);
-    height: calc(100vh - 1rem);
+    height: calc(100dvh - 1rem - env(safe-area-inset-bottom));
     border-radius: 1.25rem;
   }
+}
+
+main { scroll-margin-top: 5rem; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+.button-primary, .button-secondary { text-align: center; }
+.button-primary svg, .button-secondary svg, .badge svg { flex-shrink: 0; }
+input, select, textarea { font: inherit; }
+textarea { resize: vertical; }
+.skip-link { position: fixed; top: .5rem; left: .5rem; z-index: 100; transform: translateY(-160%); background: var(--surface); border: 2px solid var(--brand); border-radius: .5rem; padding: .75rem; }
+.skip-link:focus { transform: translateY(0); }
+.civic-node { background: var(--surface); color: var(--foreground); border: 1px solid var(--line); border-left: 5px solid var(--line); box-shadow: 0 5px 18px rgba(20,33,29,.07); }
+.civic-node-ready { border-left-color: #8aaa2a; }
+.civic-node-complete { border-left-color: var(--brand); }
+.civic-node-optional { border-left-color: #a78bfa; }
+.civic-node-selected { outline: 2px solid var(--brand); outline-offset: 3px; }
+.react-flow__controls-button { background: var(--surface); color: var(--foreground); border-color: var(--line); width: 36px; height: 36px; }
+.react-flow__controls-button:hover { background: var(--surface-2); }
+.react-flow__controls-button svg { fill: currentColor; }
+.react-flow__minimap { background: var(--surface) !important; }
+.step-dialog { width: min(580px, calc(100% - 1rem)); max-height: calc(100dvh - 2rem); margin: auto; padding: 0; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--line); border-radius: 1.25rem; background: var(--surface); color: var(--foreground); }
+.step-dialog::backdrop { background: rgba(0, 0, 0, .55); }
+html:has(.step-dialog[open]) { overflow: hidden; }
+@media (max-width: 639px) {
+  .shell { width: calc(100% - 24px); }
+  .display { font-size: clamp(2.4rem, 10vw, 3.75rem); line-height: 1.05; }
+  .landing-preview { display: grid; grid-template-columns: 1fr 1fr; height: auto; gap: .75rem; padding: 1rem; }
+  .landing-preview > div:not(.preview-node) { display: none; }
+  .landing-preview .preview-node { position: static; width: auto; min-width: 0; box-shadow: none; }
+  .landing-preview .preview-node:first-of-type { grid-column: span 2; }
+  .roadmap-graph .react-flow__minimap { display: none; }
+}
+@media print {
+  header, footer, .copilot-launcher, .copilot-panel { display: none !important; }
+  body { background: white; color: black; }
 }
 @keyframes rise {
   from {

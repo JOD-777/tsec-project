@@ -32,11 +32,11 @@ export default function Services() {
   return (
     <>
       <SiteHeader />
-      <main className="shell py-16">
+      <main id="main-content" className="shell py-16">
         <p className="eyebrow">Service explorer</p>
         <div className="mt-4 flex flex-wrap items-end justify-between gap-5">
           <div>
-            <h1 className="text-5xl font-semibold tracking-[-.05em] md:text-7xl">
+            <h1 className="text-4xl font-semibold sm:text-5xl tracking-[-.05em] md:text-7xl">
               Start with your goal.
             </h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-muted">
@@ -61,10 +61,10 @@ export default function Services() {
               <div className="mt-8 flex gap-2">
                 {s.v ? (
                   <span className="badge !bg-emerald-50 !text-emerald-800">
-                    Verified demo
+                    Sample roadmap
                   </span>
                 ) : (
-                  <span className="badge">AI discovery</span>
+                  <span className="badge">Procedure not in local catalogue</span>
                 )}
               </div>
               <h2 className="mt-4 text-xl font-semibold">{s.t}</h2>
@@ -73,7 +73,7 @@ export default function Services() {
                 href={`/demo?goal=${encodeURIComponent(s.t + (i === 0 ? " in Mumbai" : ""))}`}
                 className="mt-7 inline-flex items-center gap-1 text-sm font-semibold text-brand"
               >
-                Build roadmap <ArrowRight size={15} />
+                {s.v ? "Build sample roadmap" : "Check coverage"} <ArrowRight size={15} />
               </Link>
             </article>
           ))}

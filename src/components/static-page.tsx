@@ -14,18 +14,18 @@ export function StaticPage({
   return (
     <>
       <SiteHeader />
-      <main className="shell min-h-[65vh] py-16 md:py-24">
-        <div className="grid items-start gap-12 lg:grid-cols-[1.3fr_.7fr]">
+      <main id="main-content" className="shell min-h-[65vh] py-16 md:py-24">
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,.7fr)] lg:gap-12">
           <div>
             <p className="eyebrow">{eyebrow}</p>
-            <h1 className="mt-5 max-w-4xl text-5xl font-semibold tracking-[-.055em] md:text-7xl">
+            <h1 className="mt-5 max-w-4xl text-4xl font-semibold tracking-[-.055em] sm:text-5xl md:text-7xl">
               {title}
             </h1>
             <p className="mt-8 max-w-2xl text-lg leading-8 text-muted">
               {body}
             </p>
             <Link href="/demo" className="button-primary mt-8">
-              Explore the verified demo <ArrowRight size={16} />
+              Explore the sample demo <ArrowRight size={16} />
             </Link>
           </div>
           <aside className="card relative overflow-hidden p-6">

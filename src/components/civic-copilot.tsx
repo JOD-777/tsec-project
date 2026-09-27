@@ -12,12 +12,14 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { useLocalDemo } from "@/lib/local-demo";
+import { documentChecklist, workflowSummary } from "@/lib/workflow";
 
 type Message = { role: "assistant" | "user"; text: string; meta?: string };
 const starter: Message = {
   role: "assistant",
   text: "I can explain this roadmap, surface the next action, and show which claims still need official verification.",
-  meta: "Verified-context assistant",
+  meta: "Sample-context assistant",
 };
 const prompts = [
   "What should I do next?",
@@ -31,17 +33,28 @@ export function CivicCopilot() {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([starter]);
   const [loading, setLoading] = useState(false);
+  const demo = useLocalDemo();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const openCopilot = () => setOpen(true);
+    const openCopilot = (event: Event) => { setOpen(true); const detail = (event as CustomEvent<unknown>).detail; if (typeof detail === "string") setQuestion(detail.slice(0, 600)); };
     window.addEventListener("civicflow:open-copilot", openCopilot);
     return () =>
       window.removeEventListener("civicflow:open-copilot", openCopilot);
   }, []);
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+    if (open) endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [messages, loading, open]);
+  useEffect(() => {
+    if (!open) return;
+    inputRef.current?.focus({ preventScroll: true });
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { setOpen(false); launcherRef.current?.focus({ preventScroll: true }); } };
+    window.addEventListener("keydown", escape);
+    return () => window.removeEventListener("keydown", escape);
+  }, [open]);
   if (pathname === "/login") return null;
 
   async function ask(text: string) {
@@ -52,13 +65,25 @@ export function CivicCopilot() {
     setLoading(true);
     setMessages((current) => [...current, { role: "user", text: clean }]);
     try {
+      // The existing API has seeded context only; answer execution-state questions locally.
+      if (/\b(next|start|blocking|blocked|documents?|parallel)\b/i.test(clean)) {
+        const summary = workflowSummary(demo.workflow);
+        const checklist = documentChecklist(demo.workflow);
+        const answer = /\bdocuments?\b/i.test(clean)
+          ? `Your sample checklist has ${checklist.filter((document) => document.ready).length} of ${checklist.length} documents marked prepared. Still to prepare: ${checklist.filter((document) => !document.ready).map((document) => document.name).join(", ") || "none"}. These are planning examples, not verified portal requirements.`
+          : `Current sample progress: ${summary.done}/${summary.required} required steps complete. ${summary.next ? `Next: ${summary.next.title}. Ready actions: ${summary.ready.map((step) => step.title).join("; ")}. Other steps unlock after their prerequisites are complete.` : "All required sample steps are complete; confirm outstanding official requirements with the relevant authority."} Verify procedural requirements using the roadmap’s official portal links.`;
+        setMessages((current) => [...current, { role: "assistant", text: answer, meta: "Current browser-local demo state" }]);
+        return;
+      }
       const response = await fetch("/api/copilot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: clean, pathname }),
+        signal: AbortSignal.timeout(25_000),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Copilot request failed");
+      if (typeof data.answer !== "string" || !data.answer.trim()) throw new Error("Empty assistant response");
       setMessages((current) => [
         ...current,
         {
@@ -67,7 +92,7 @@ export function CivicCopilot() {
           meta:
             data.mode === "live"
               ? `Live AI · ${data.model}`
-              : "Verified safe mode",
+              : "Sample fallback mode",
         },
       ]);
     } catch {
@@ -91,6 +116,8 @@ export function CivicCopilot() {
   return (
     <>
       <button
+        ref={launcherRef}
+        tabIndex={open ? -1 : 0}
         onClick={() => setOpen(true)}
         className={`copilot-launcher ${open ? "pointer-events-none scale-90 opacity-0" : ""}`}
         aria-label="Open CivicFlow Copilot"
@@ -101,8 +128,17 @@ export function CivicCopilot() {
         <span className="absolute -right-1 -top-1 size-3 rounded-full border-2 border-background bg-emerald-400" />
       </button>
       <aside
+        ref={panelRef}
+        onKeyDown={(event) => {
+          if (event.key !== "Tab" || !window.matchMedia("(max-width: 640px)").matches) return;
+          const controls = [...(panelRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), textarea, a[href], input:not(:disabled)') ?? [])].filter((element) => element.offsetParent !== null);
+          const first = controls[0], last = controls[controls.length - 1];
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+        }}
         className={`copilot-panel ${open ? "translate-y-0 opacity-100 sm:translate-x-0" : "pointer-events-none translate-y-8 opacity-0 sm:translate-x-8 sm:translate-y-0"}`}
         aria-hidden={!open}
+        inert={!open}
         aria-label="CivicFlow Copilot"
       >
         <header className="flex items-center justify-between border-b border-line px-5 py-4">
@@ -121,7 +157,7 @@ export function CivicCopilot() {
             </div>
           </div>
           <button
-            onClick={() => setOpen(false)}
+            onClick={() => { setOpen(false); launcherRef.current?.focus({ preventScroll: true }); }}
             className="icon-button"
             aria-label="Close CivicFlow Copilot"
           >
@@ -152,7 +188,7 @@ export function CivicCopilot() {
               <div className="mr-16 rounded-2xl rounded-bl-sm border border-line bg-surface-2 px-4 py-3">
                 <span className="flex items-center gap-2 text-xs text-muted">
                   <LoaderCircle className="animate-spin" size={14} />
-                  Checking the verified context…
+                  Checking the sample context…
                 </span>
               </div>
             ) : null}
@@ -180,6 +216,7 @@ export function CivicCopilot() {
                 Ask CivicFlow
               </label>
               <textarea
+                ref={inputRef}
                 id="copilot-question"
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
@@ -190,6 +227,7 @@ export function CivicCopilot() {
                   }
                 }}
                 rows={1}
+                maxLength={600}
                 placeholder="Ask about this civic path…"
                 className="max-h-28 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
               />
@@ -207,6 +245,7 @@ export function CivicCopilot() {
                 No AI claim is treated as official
               </span>
               <button
+                disabled={loading}
                 onClick={() => setMessages([starter])}
                 className="flex items-center gap-1 hover:text-foreground"
               >

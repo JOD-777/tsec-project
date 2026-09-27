@@ -15,23 +15,27 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site-header";
+import { useLocalDemo, updateDemo } from "@/lib/local-demo";
+import { AdminPanel } from "@/components/admin-panel";
+import { dependencies, sources, steps } from "@/lib/demo-data";
+import { validateGraph } from "@/lib/graph";
 export function AdminConsole() {
-  const [state, setState] = useState<"pending" | "approved" | "rejected">(
-    "pending",
-  );
+  const demo = useLocalDemo();
+  const state = demo.review;
   const [active, setActive] = useState("Changes");
   function decide(next: "approved" | "rejected") {
-    setState(next);
+    const persisted = updateDemo((current) => ({ ...current, review: next, audit: [...current.audit, { action: `Synthetic change ${next}`, at: new Date().toISOString() }].slice(-100) }));
     toast.success(
       next === "approved"
-        ? "Change approved and audit event recorded"
-        : "Change rejected and source flagged",
+        ? "Demo change approved; local audit event recorded"
+        : "Demo change rejected; local audit event recorded",
+      { description: persisted ? "Saved in this browser only. No backend mutation." : "Browser storage unavailable; saved for this session only." },
     );
   }
   return (
     <>
       <SiteHeader compact />
-      <main className="shell py-10">
+      <main id="main-content" className="shell pb-28 pt-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="eyebrow">Human validation console</p>
@@ -39,7 +43,7 @@ export function AdminConsole() {
               Source intelligence
             </h1>
             <p className="mt-2 text-muted">
-              Review evidence before canonical procedures change.
+              Browser-local demo console. No shared backend changes are made.
             </p>
           </div>
           <span className="badge">
@@ -47,22 +51,22 @@ export function AdminConsole() {
             Demo system healthy
           </span>
         </div>
-        <div className="mt-8 grid gap-4 md:grid-cols-4">
-          <Metric icon={<Database />} value="4" label="Sources indexed" />
-          <Metric icon={<FileCheck2 />} value="8" label="Claims labelled" />
+        <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Metric icon={<Database />} value={String(sources.length)} label="Sample source links" />
+          <Metric icon={<FileCheck2 />} value={String(steps.length)} label="Sample steps" />
           <Metric
             icon={<GitCompareArrows />}
             value={state === "pending" ? "1" : "0"}
             label="Review pending"
           />
-          <Metric icon={<Activity />} value="100%" label="Graph validity" />
+          <Metric icon={<Activity />} value={validateGraph(steps.map((step) => step.id), dependencies).valid ? "Pass" : "Fail"} label="Graph validity" />
         </div>
         <div className="mt-8 grid gap-5 lg:grid-cols-[260px_1fr]">
           <aside className="card h-fit p-3">
             <p className="px-3 py-2 text-xs font-semibold text-muted">
               ADMIN WORKSPACE
             </p>
-            {[
+            <nav aria-label="Admin demo sections" className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-1">{[
               "Overview",
               "Sources",
               "Changes",
@@ -75,7 +79,6 @@ export function AdminConsole() {
                 key={x}
                 onClick={() => {
                   setActive(x);
-                  toast.info(`${x} workspace selected`);
                 }}
                 aria-pressed={active === x}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm ${active === x ? "bg-foreground text-background" : "hover:bg-surface-2"}`}
@@ -87,16 +90,16 @@ export function AdminConsole() {
                   </span>
                 ) : null}
               </button>
-            ))}
+            ))}</nav>
           </aside>
-          <section className="card overflow-hidden">
+          {active !== "Changes" ? <AdminPanel active={active} /> : <section className="card overflow-hidden" aria-label="Synthetic source change review">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-6">
               <div>
                 <p className="text-xs font-semibold text-brand">
                   SEEDED CHANGE-DETECTION DEMO
                 </p>
                 <h2 className="mt-2 text-xl font-semibold">
-                  Official source content changed
+                  Synthetic source change
                 </h2>
               </div>
               <span
@@ -193,11 +196,11 @@ export function AdminConsole() {
                   <div>
                     <b className="text-sm">Decision recorded</b>
                     <p className="mt-1 text-xs text-muted">
-                      Audit event DEMO-2026-0927 · procedure version preserved
+                      Browser-local audit event recorded · {state === "approved" ? "demo version v1.4" : "demo version v1.3 retained"}
                     </p>
                   </div>
                   <button
-                    onClick={() => setState("pending")}
+                    onClick={() => updateDemo((current) => ({ ...current, review: "pending", audit: [...current.audit, { action: "Synthetic review reset", at: new Date().toISOString() }].slice(-100) }))}
                     className="button-secondary !min-h-9 text-xs"
                   >
                     <RefreshCw size={14} />
@@ -206,7 +209,7 @@ export function AdminConsole() {
                 </div>
               )}
             </div>
-          </section>
+          </section>}
         </div>
         <div className="mt-8 text-center">
           <Link

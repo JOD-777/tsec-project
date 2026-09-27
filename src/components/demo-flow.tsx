@@ -17,12 +17,14 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
+import { useLocalDemo, updateDemo } from "@/lib/local-demo";
+import { compileWorkflow, supportsDemoGoal, type Answers } from "@/lib/workflow";
 
 const pipeline = [
   "Understanding your goal",
   "Resolving jurisdiction",
-  "Finding official sources",
-  "Structuring requirements",
+  "Loading sample source catalogue",
+  "Applying your demo profile",
   "Checking dependencies",
   "Building your roadmap",
 ];
@@ -45,6 +47,10 @@ type Intent = {
 export function DemoFlow() {
   const params = useSearchParams();
   const goal = params.get("goal") || "Start a home food business in Mumbai";
+  const supported = supportsDemoGoal(goal);
+  const demo = useLocalDemo();
+  const [draft, setDraft] = useState<Answers | null>(null);
+  const answers = draft ?? demo.workflow.answers;
   const [stage, setStage] = useState<"questions" | "building" | "ready">(
     "questions",
   );
@@ -59,6 +65,7 @@ export function DemoFlow() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: goal }),
+        signal: AbortSignal.timeout(25_000),
       });
       if (!response.ok) throw new Error("Could not interpret this goal");
       setIntent(await response.json());
@@ -72,12 +79,13 @@ export function DemoFlow() {
     void fetchIntent();
   };
   useEffect(() => {
+    if (!supported) return;
     const controller = new AbortController();
     fetch("/api/intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: goal }),
-      signal: controller.signal,
+      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(25_000)]),
     })
       .then((response) => {
         if (!response.ok) throw new Error("Could not interpret this goal");
@@ -92,7 +100,7 @@ export function DemoFlow() {
           setIntentState("error");
       });
     return () => controller.abort();
-  }, [goal]);
+  }, [goal, supported]);
   useEffect(() => {
     if (stage !== "building") return;
     const id = window.setInterval(
@@ -119,10 +127,11 @@ export function DemoFlow() {
         .filter(Boolean)
         .join(" / ")
     : "Resolving jurisdiction…";
+  if (!supported) return <div className="min-h-screen"><SiteHeader compact /><main id="main-content" className="shell py-12"><Link href="/services" className="text-sm text-brand">← Explore services</Link><section className="card mx-auto mt-6 max-w-2xl p-6 sm:p-8"><p className="eyebrow">Procedure coverage</p><h1 className="mt-3 text-3xl font-semibold">This goal needs a reviewed procedure.</h1><p className="mt-4 break-words text-sm text-muted">Your goal: “{goal.slice(0, 500)}”</p><p className="mt-4 text-sm leading-6 text-muted">The local catalogue currently contains a Mumbai food-business sample. It cannot generate a reliable procedure for this goal or another city. You can explore the sample without treating it as guidance for your task.</p><Link className="button-primary mt-6" href="/demo?goal=Start%20a%20home%20food%20business%20in%20Mumbai">Try the Mumbai sample <ArrowRight size={16} /></Link></section></main></div>;
   return (
     <div className="min-h-screen">
       <SiteHeader compact />
-      <main className="shell py-8 md:py-12">
+      <main id="main-content" className="shell pb-28 pt-8 md:pt-12">
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-foreground"
@@ -172,7 +181,7 @@ export function DemoFlow() {
               {stage === "questions" ? (
                 <div className="space-y-6">
                   <div>
-                    <p className="eyebrow">Two details change your route</p>
+                    <p className="eyebrow">Confirm your sample profile</p>
                     <p className="mt-2 text-sm text-muted">
                       We ask only what affects jurisdiction or eligibility.
                       Personal documents are not needed for this demo.
@@ -182,19 +191,19 @@ export function DemoFlow() {
                     label="Where will you operate?"
                     hint="This selects the applicable municipal authority."
                   >
-                    <select className="field mt-2">
-                      <option>Home premises in Mumbai</option>
-                      <option>Commercial premises in Mumbai</option>
+                    <select aria-label="Where will you operate?" className="field mt-2" value={answers.premises} onChange={(event) => setDraft({ ...answers, premises: event.target.value as Answers["premises"] })}>
+                      <option value="home">Home premises in Mumbai</option>
+                      <option value="commercial">Commercial premises in Mumbai</option>
                     </select>
                   </Question>
                   <Question
                     label="What will you primarily do?"
                     hint="The activity changes the official eligibility path."
                   >
-                    <select className="field mt-2">
-                      <option>Prepare and deliver food</option>
-                      <option>Package food products</option>
-                      <option>Resell packaged goods</option>
+                    <select aria-label="What will you primarily do?" className="field mt-2" value={answers.activity} onChange={(event) => setDraft({ ...answers, activity: event.target.value as Answers["activity"] })}>
+                      <option value="prepare">Prepare and deliver food</option>
+                      <option value="package">Package food products</option>
+                      <option value="resell">Resell packaged goods</option>
                     </select>
                   </Question>
                   <Question
@@ -203,11 +212,11 @@ export function DemoFlow() {
                   >
                     <div className="mt-2 grid grid-cols-2 gap-3">
                       <label className="choice">
-                        <input defaultChecked type="radio" name="existing" />
+                        <input checked={!answers.existingRegistration} onChange={() => setDraft({ ...answers, existingRegistration: false })} type="radio" name="existing" />
                         No
                       </label>
                       <label className="choice">
-                        <input type="radio" name="existing" />
+                        <input checked={answers.existingRegistration} onChange={() => setDraft({ ...answers, existingRegistration: true })} type="radio" name="existing" />
                         Yes
                       </label>
                     </div>
@@ -215,12 +224,14 @@ export function DemoFlow() {
                   <button
                     className="button-primary w-full"
                     onClick={() => {
+                      updateDemo((current) => ({ ...current, workflow: compileWorkflow(answers) }));
                       setProgress(0);
                       setStage("building");
                     }}
                   >
                     Compile my roadmap <ArrowRight size={17} />
                   </button>
+                  <p className="text-xs leading-5 text-muted">Creates a fresh browser-local sample using your answers. Existing sample progress will be replaced. Activity and premises are planning inputs, not verified eligibility decisions.</p>
                 </div>
               ) : null}
               {stage === "building" ? (
@@ -232,8 +243,8 @@ export function DemoFlow() {
                     <div>
                       <p className="font-semibold">Compiling your procedure</p>
                       <p className="text-sm text-muted">
-                        Matching verified source snapshots to deterministic
-                        dependency rules.
+                        Preparing the seeded sample and applying your answers.
+                        No live government crawl runs in this demo.
                       </p>
                     </div>
                   </div>
@@ -276,7 +287,7 @@ export function DemoFlow() {
                   </h2>
                   <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-muted">
                     8 steps · 4 official portals · 2 parallel paths · every
-                    factual item carries a verification label.
+                    requirement is labelled as sample data.
                   </p>
                   <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
                     <Link

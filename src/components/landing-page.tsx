@@ -17,6 +17,8 @@ import { FormEvent, useState } from "react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { translations } from "@/lib/demo-data";
+import { useLocalDemo, updateDemo, type Locale } from "@/lib/local-demo";
+import { useSpeechInput } from "@/lib/use-speech-input";
 const examples = [
   "Start a home food business in Mumbai",
   "Get a birth certificate",
@@ -26,24 +28,25 @@ const examples = [
 export function LandingPage() {
   const router = useRouter();
   const [goal, setGoal] = useState("");
-  const [lang, setLang] = useState<keyof typeof translations>("en");
+  const { locale: lang } = useLocalDemo();
+  const speech = useSpeechInput(setGoal, lang);
   const copy = translations[lang];
   function submit(e: FormEvent) {
     e.preventDefault();
     router.push(
-      `/demo?goal=${encodeURIComponent(goal || examples[0])}&lang=${lang}`,
+      `/demo?goal=${encodeURIComponent(goal.trim() || examples[0])}`,
     );
   }
   return (
     <>
       <SiteHeader />
-      <main>
-        <section className="shell grid min-h-[calc(100vh-4rem)] items-center gap-12 py-16 lg:grid-cols-[1.08fr_.92fr] lg:py-24">
-          <div className="animate-rise">
+      <main id="main-content">
+        <section className="shell grid min-h-[calc(100dvh-4rem)] items-center gap-8 py-10 sm:gap-12 sm:py-16 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,.92fr)] lg:py-24">
+          <div className="min-w-0 animate-rise">
             <div className="mb-7 flex flex-wrap gap-2">
               <span className="badge">
                 <ShieldCheck size={13} className="text-brand" />
-                Source-verifiable
+                  Official source links
               </span>
               <span className="badge">
                 <GitBranch size={13} className="text-brand" />
@@ -72,6 +75,7 @@ export function LandingPage() {
                 <input
                   id="goal"
                   value={goal}
+                  maxLength={500}
                   onChange={(e) => setGoal(e.target.value)}
                   className="min-w-0 flex-1 bg-transparent px-1 py-4 outline-none"
                   placeholder={copy.prompt}
@@ -79,10 +83,9 @@ export function LandingPage() {
                 <button
                   type="button"
                   className="grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
-                  aria-label="Use example voice input"
-                  onClick={() =>
-                    setGoal("I want to start a home food business in Mumbai")
-                  }
+                  aria-label={speech.listening ? "Stop voice input" : "Speak your civic goal"}
+                  aria-pressed={speech.listening}
+                  onClick={speech.toggle}
                 >
                   <Mic size={19} />
                 </button>
@@ -94,6 +97,7 @@ export function LandingPage() {
                 </button>
               </div>
             </form>
+            {speech.message && <p role="status" className="mt-3 text-sm text-muted">{speech.message}</p>}
             <div className="mt-4 flex flex-wrap gap-2">
               {examples.map((x) => (
                 <button
@@ -105,13 +109,14 @@ export function LandingPage() {
                 </button>
               ))}
             </div>
-            <div className="mt-8 flex items-center gap-2 text-sm">
+            <div className="mt-8 flex flex-wrap items-center gap-2 text-sm">
               <Globe2 size={16} className="text-muted" />
               {Object.entries(translations).map(([key, value]) => (
                 <button
                   key={key}
                   className={`rounded-full px-3 py-1 ${lang === key ? "bg-foreground text-background" : "text-muted"}`}
-                  onClick={() => setLang(key as keyof typeof translations)}
+                  aria-pressed={lang === key}
+                  onClick={() => updateDemo((current) => ({ ...current, locale: key as Locale }))}
                 >
                   {value.label}
                 </button>
@@ -119,15 +124,15 @@ export function LandingPage() {
             </div>
           </div>
           <div
-            className="relative animate-rise"
+            className="relative min-w-0 animate-rise"
             style={{ animationDelay: "120ms" }}
           >
-          <div className="absolute inset-0 -z-10 rounded-full bg-accent/30 blur-3xl" />
+  <div className="absolute inset-0 -z-10 rounded-full bg-accent/30 blur-3xl" />
             <div className="card overflow-hidden">
-              <div className="flex items-center justify-between border-b border-line px-5 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
                 <div>
                   <p className="text-xs font-semibold text-brand">
-                    LIVE ROADMAP PREVIEW
+                    SAMPLE ROADMAP PREVIEW
                   </p>
                   <p className="mt-1 font-semibold">
                     Home food business · Mumbai
@@ -138,7 +143,7 @@ export function LandingPage() {
                   steps
                 </span>
               </div>
-              <div className="dot-grid relative h-[430px] overflow-hidden p-7">
+              <div className="landing-preview dot-grid relative h-[430px] overflow-hidden p-7">
                 <div className="absolute left-[14%] top-[44%] h-px w-[28%] bg-brand/40" />
                 <div className="absolute left-[42%] top-[26%] h-[38%] w-px bg-brand/40" />
                 <div className="absolute left-[42%] top-[26%] h-px w-[28%] bg-brand/40" />
@@ -266,7 +271,7 @@ function PreviewNode({
 }) {
   return (
     <div
-      className={`absolute w-36 rounded-2xl border border-line bg-surface p-3 shadow-lg sm:w-40 ${className}`}
+      className={`preview-node absolute w-36 rounded-2xl border border-line bg-surface p-3 shadow-lg sm:w-40 ${className}`}
     >
       <div className="flex items-center gap-2">
         <span
