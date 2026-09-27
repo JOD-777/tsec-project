@@ -14,10 +14,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+function getMetadataBase() {
+  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (configuredUrl) {
+    try {
+      return new URL(configuredUrl);
+    } catch {
+      // Fall through to the deployment URL when a configured value is malformed.
+    }
+  }
+
+  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() || process.env.VERCEL_URL?.trim();
+  return new URL(vercelHost ? `https://${vercelHost}` : "http://localhost:3000");
+}
+
 export const metadata: Metadata = {
   title: { default: "CivicFlow AI — Government procedures, compiled", template: "%s · CivicFlow AI" },
   description: "Turn a civic goal into a personalized, source-verifiable government procedure roadmap.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  metadataBase: getMetadataBase(),
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
