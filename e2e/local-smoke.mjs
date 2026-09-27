@@ -43,7 +43,7 @@ fs.mkdirSync(artifacts, { recursive: true });
   if (!await page.getByText('2 / 7').count()) throw new Error('Progress did not persist');
   await page.getByRole('combobox', { name: 'Roadmap language' }).selectOption('mr');
   await page.getByRole('heading', { name: 'घरगुती खाद्य व्यवसाय सुरू करा' }).waitFor();
-  await page.getByRole('combobox', { name: 'Roadmap language' }).selectOption('en');
+  await page.locator('.roadmap-header select').selectOption('en');
   await page.goto(baseURL + '/admin');
   for (const tab of ['Overview', 'Sources', 'Claims', 'Procedures', 'Evaluations', 'Audit log', 'Changes']) {
     await page.getByRole('button', { name: tab, exact: tab !== 'Changes' }).click();
@@ -63,6 +63,7 @@ fs.mkdirSync(artifacts, { recursive: true });
   await page.getByRole('radio', { name: 'Yes', exact: true }).check();
   await page.getByRole('checkbox', { name: /Use the Mumbai, Maharashtra sample jurisdiction/ }).check();
   await page.getByRole('button', { name: 'Compile my roadmap' }).click();
+  if (await page.getByRole('dialog', { name: 'Replace this saved sample?' }).isVisible()) await page.getByRole('button', { name: 'Replace and build fresh sample' }).click();
   await page.getByRole('link', { name: 'Open interactive roadmap' }).click();
   await page.getByRole('heading', { name: 'Check commercial premises permissions', exact: true }).first().waitFor();
   await page.getByText('2 / 7', { exact: false }).waitFor();

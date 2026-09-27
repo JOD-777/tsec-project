@@ -1,7 +1,8 @@
 "use client";
+import { useTranslation } from "@/lib/use-translation";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   ArrowUp,
   Bot,
@@ -14,9 +15,9 @@ import {
 } from "lucide-react";
 import { useWorkflowDemo } from "@/lib/local-demo";
 import { getProcedure } from "@/lib/procedures";
-import { documentChecklist, workflowSummary } from "@/lib/workflow";
+import { copilotProcedure, localCopilotAnswer } from "@/lib/copilot-context";
 
-type Message = { role: "assistant" | "user"; text: string; meta?: string };
+type Message = { role: "assistant" | "user"; text: string; meta?: string; question?: string };
 const starter: Message = {
   role: "assistant",
   text: "I can explain this roadmap, surface the next action, and show which claims still need official verification.",
@@ -30,13 +31,20 @@ const prompts = [
 
 export function CivicCopilot() {
   const pathname = usePathname();
+  const params = useSearchParams();
+  const procedureId = copilotProcedure(pathname, params.get("goal"));
+  if (pathname === "/login") return null;
+  return <CopilotSession key={procedureId ?? "catalogue"} pathname={pathname} procedureId={procedureId} />;
+}
+
+function CopilotSession({ pathname, procedureId }: { pathname: string; procedureId: string | null }) {
+  const { t, locale } = useTranslation();
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([starter]);
   const [loading, setLoading] = useState(false);
-  const routeId = pathname.startsWith("/services/") ? pathname.split("/")[2] : pathname.split("/")[3];
-  const procedureId = getProcedure(routeId)?.id ?? "home-food-business";
-  const demo = useWorkflowDemo(procedureId);
+  const demo = useWorkflowDemo(procedureId ?? "home-food-business");
+  const requestRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -58,43 +66,33 @@ export function CivicCopilot() {
     window.addEventListener("keydown", escape);
     return () => window.removeEventListener("keydown", escape);
   }, [open]);
-  if (pathname === "/login") return null;
+  useEffect(() => () => requestRef.current?.abort(), []);
 
   async function ask(text: string) {
-    const clean = text.trim();
+    const clean = text.trim().slice(0, 600);
     if (clean.length < 3 || loading) return;
     setOpen(true);
     setQuestion("");
     setLoading(true);
     setMessages((current) => [...current, { role: "user", text: clean }]);
+    const controller = new AbortController();
+    requestRef.current = controller;
     try {
-      // The existing API has seeded context only; answer execution-state questions locally.
-      if (/\b(next|start|blocking|blocked|documents?|parallel)\b/i.test(clean)) {
-        const summary = workflowSummary(demo.workflow);
-        const checklist = documentChecklist(demo.workflow);
-        const answer = /\bdocuments?\b/i.test(clean)
-          ? `Your sample checklist has ${checklist.filter((document) => document.ready).length} of ${checklist.length} documents marked prepared. Still to prepare: ${checklist.filter((document) => !document.ready).map((document) => document.name).join(", ") || "none"}. These are planning examples, not verified portal requirements.`
-          : `Current sample progress: ${summary.done}/${summary.required} required steps complete. ${summary.next ? `Next: ${summary.next.title}. Ready actions: ${summary.ready.map((step) => step.title).join("; ")}. Other steps unlock after their prerequisites are complete.` : "All required sample steps are complete; confirm outstanding official requirements with the relevant authority."} Verify procedural requirements using the roadmap’s official portal links.`;
-        setMessages((current) => [...current, { role: "assistant", text: answer, meta: "Current browser-local demo state" }]);
-        return;
-      }
-      if (procedureId !== "home-food-business") {
-        const procedure = getProcedure(procedureId)!;
-        const summary = workflowSummary(demo.workflow);
-        const step = summary.items.find((item) => clean.toLowerCase().includes(item.title.toLowerCase()));
-        const answer = step ? `${step.title}: ${step.description}` : `${procedure.title} (${procedure.jurisdiction}): ${procedure.description} Open a step to see its official source link. This sample tracks planning progress; current eligibility, fees and approval are confirmed by the authority.`;
-        setMessages((current) => [...current, { role: "assistant", text: answer, meta: "Current service sample context" }]);
+      const answer = localCopilotAnswer(clean, procedureId ? demo.workflow : undefined, locale);
+      if (answer) {
+        setMessages((current) => [...current, { role: "assistant", text: answer, question: clean, meta: procedureId ? "Current browser-local demo state" : "Service catalogue context" }]);
         return;
       }
       const response = await fetch("/api/copilot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: clean, pathname }),
-        signal: AbortSignal.timeout(25_000),
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(25_000)]),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Copilot request failed");
       if (typeof data.answer !== "string" || !data.answer.trim()) throw new Error("Empty assistant response");
+      if (controller.signal.aborted) return;
       setMessages((current) => [
         ...current,
         {
@@ -107,16 +105,17 @@ export function CivicCopilot() {
         },
       ]);
     } catch {
+      if (controller.signal.aborted) return;
       setMessages((current) => [
         ...current,
         {
           role: "assistant",
-          text: "I could not reach the assistant. Open the roadmap and use its official-source links while I reconnect.",
+          text: t("The live assistant is unavailable. {description} Use the roadmap for current progress and official-source links.", { description: t(getProcedure(procedureId!)?.description ?? "") }),
           meta: "Connection fallback",
         },
       ]);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }
 
@@ -131,11 +130,11 @@ export function CivicCopilot() {
         tabIndex={open ? -1 : 0}
         onClick={() => setOpen(true)}
         className={`copilot-launcher ${open ? "pointer-events-none scale-90 opacity-0" : ""}`}
-        aria-label="Open CivicFlow Copilot"
+        aria-label={t("Open CivicFlow Copilot")}
       >
         <span className="absolute inset-0 animate-ping rounded-full bg-accent/20" />
         <Sparkles size={20} />
-        <span className="hidden sm:inline">Ask CivicFlow</span>
+        <span className="hidden sm:inline">{t("Ask CivicFlow")}</span>
         <span className="absolute -right-1 -top-1 size-3 rounded-full border-2 border-background bg-emerald-400" />
       </button>
       <aside
@@ -150,7 +149,7 @@ export function CivicCopilot() {
         className={`copilot-panel ${open ? "translate-y-0 opacity-100 sm:translate-x-0" : "pointer-events-none translate-y-8 opacity-0 sm:translate-x-8 sm:translate-y-0"}`}
         aria-hidden={!open}
         inert={!open}
-        aria-label="CivicFlow Copilot"
+        aria-label={t("CivicFlow Copilot")}
       >
         <header className="flex items-center justify-between border-b border-line px-5 py-4">
           <div className="flex items-center gap-3">
@@ -159,24 +158,24 @@ export function CivicCopilot() {
             </span>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-semibold">CivicFlow Copilot</h2>
+                <h2 className="font-semibold">{t("CivicFlow Copilot")}</h2>
                 <span className="size-2 rounded-full bg-emerald-500" />
               </div>
               <p className="text-[11px] text-muted">
-                Grounded in the visible demo evidence
+                {t(procedureId ? getProcedure(procedureId)!.title : "Explore the service catalogue")}
               </p>
             </div>
           </div>
           <button
             onClick={() => { setOpen(false); launcherRef.current?.focus({ preventScroll: true }); }}
             className="icon-button"
-            aria-label="Close CivicFlow Copilot"
+            aria-label={t("Close CivicFlow Copilot")}
           >
             <X size={18} />
           </button>
         </header>
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="flex-1 space-y-4 overflow-y-auto p-5">
+          <div role="log" aria-label={t("Assistant conversation")} aria-live="polite" className="flex-1 space-y-4 overflow-y-auto p-5">
             {messages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}
@@ -185,12 +184,12 @@ export function CivicCopilot() {
                 <div
                   className={`rounded-2xl px-4 py-3 text-sm leading-6 ${message.role === "user" ? "rounded-br-sm bg-brand text-white" : "rounded-bl-sm border border-line bg-surface-2"}`}
                 >
-                  <p className="whitespace-pre-line">{message.text}</p>
+                  <p className="whitespace-pre-line break-words [overflow-wrap:anywhere]">{message.question ? localCopilotAnswer(message.question, procedureId ? demo.workflow : undefined, locale) ?? message.text : t(message.text)}</p>
                 </div>
                 {message.meta ? (
                   <p className="mt-1.5 flex items-center gap-1.5 px-1 text-[10px] text-muted">
                     <ShieldCheck size={11} />
-                    {message.meta}
+                    {t(message.meta)}
                   </p>
                 ) : null}
               </div>
@@ -198,9 +197,7 @@ export function CivicCopilot() {
             {loading ? (
               <div className="mr-16 rounded-2xl rounded-bl-sm border border-line bg-surface-2 px-4 py-3">
                 <span className="flex items-center gap-2 text-xs text-muted">
-                  <LoaderCircle className="animate-spin" size={14} />
-                  Checking the sample context…
-                </span>
+                  <LoaderCircle className="animate-spin" size={14} /> {t("Checking the sample context…")} </span>
               </div>
             ) : null}
             <div ref={endRef} />
@@ -213,7 +210,7 @@ export function CivicCopilot() {
                   onClick={() => void ask(prompt)}
                   className="shrink-0 rounded-full border border-line bg-surface px-3 py-2 text-xs transition hover:border-brand hover:text-brand"
                 >
-                  {prompt}
+                  {t(prompt)}
                 </button>
               ))}
             </div>
@@ -223,46 +220,40 @@ export function CivicCopilot() {
               onSubmit={submit}
               className="flex items-end gap-2 rounded-2xl border border-line bg-background p-2 focus-within:border-brand"
             >
-              <label className="sr-only" htmlFor="copilot-question">
-                Ask CivicFlow
-              </label>
+              <label className="sr-only" htmlFor="copilot-question"> {t("Ask CivicFlow")} </label>
               <textarea
                 ref={inputRef}
                 id="copilot-question"
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
+                  if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
                     event.preventDefault();
                     void ask(question);
                   }
                 }}
                 rows={1}
                 maxLength={600}
-                placeholder="Ask about this civic path…"
+                placeholder={t("Ask about this civic path…")}
                 className="max-h-28 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
               />
               <button
                 disabled={question.trim().length < 3 || loading}
                 className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand text-white transition disabled:opacity-40"
-                aria-label="Send question"
+                aria-label={t("Send question")}
               >
                 <ArrowUp size={17} />
               </button>
             </form>
             <div className="mt-2 flex items-center justify-between text-[10px] text-muted">
               <span className="flex items-center gap-1">
-                <CheckCircle2 size={11} />
-                No AI claim is treated as official
-              </span>
+                <CheckCircle2 size={11} /> {t("No AI claim is treated as official")} </span>
               <button
                 disabled={loading}
                 onClick={() => setMessages([starter])}
                 className="flex items-center gap-1 hover:text-foreground"
               >
-                <Minimize2 size={11} />
-                Reset
-              </button>
+                <Minimize2 size={11} /> {t("Reset")} </button>
             </div>
           </div>
         </div>

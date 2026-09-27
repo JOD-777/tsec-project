@@ -17,4 +17,6 @@ node e2e/local-smoke.mjs
 
 The script uses installed Google Chrome by default. Set `PLAYWRIGHT_BROWSER_CHANNEL` for another installed Playwright channel, `PLAYWRIGHT_MODULE_PATH` to use an external Playwright package directory, or `CIVICFLOW_BASE_URL` to test a different local port. It creates a fresh browser context and uses sample data; no real login or database mutation is performed.
 
+`node e2e/frontend-final.mjs` checks keyboard command search, theme commands, dependency filters, non-destructive intake cancellation, assistant isolation and translated public/service/intake/tool pages at three widths. It checks that language changes preserve saved workflows. `e2e/reactflow-ui.mjs` checks all six graphs in three languages, both themes and three widths. The roadmap/admin suites verify scenario application, readiness, PDF export and review-state preservation.
+
 In restricted local environments where Turbopack reports worker-port EPERM, use `npm run build -- --webpack` for production-build verification. The team's standard build command remains unchanged.

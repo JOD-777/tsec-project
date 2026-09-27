@@ -333,6 +333,10 @@ textarea { resize: vertical; }
 .step-dialog { width: min(580px, calc(100% - 1rem)); max-height: calc(100dvh - 2rem); margin: auto; padding: 0; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--line); border-radius: 1.25rem; background: var(--surface); color: var(--foreground); }
 .step-dialog::backdrop { background: rgba(0, 0, 0, .55); }
 html:has(.step-dialog[open]) { overflow: hidden; }
+.command-dialog { width: min(640px, calc(100% - 1rem)); max-height: calc(100dvh - 2rem); margin: auto; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 1.25rem; background: var(--surface); color: var(--foreground); }
+.command-dialog[open] { display: flex; flex-direction: column; }
+.command-dialog::backdrop { background: rgba(0, 0, 0, .55); }
+html:has(.command-dialog[open]) { overflow: hidden; }
 @media (max-width: 639px) {
   .shell { width: calc(100% - 24px); }
   .display { font-size: clamp(2.4rem, 10vw, 3.75rem); line-height: 1.05; }
@@ -343,7 +347,7 @@ html:has(.step-dialog[open]) { overflow: hidden; }
   .roadmap-graph .react-flow__minimap { display: none; }
 }
 @media print {
-  header, footer, .copilot-launcher, .copilot-panel { display: none !important; }
+  header, footer, .copilot-launcher, .copilot-panel, .command-dialog { display: none !important; }
   body { background: white; color: black; }
 }
 @keyframes rise {

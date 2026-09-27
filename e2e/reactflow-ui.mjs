@@ -14,11 +14,11 @@ try {
     await page.setViewportSize({ width, height: 900 });
     for (const theme of ["light", "dark"]) for (const id of ids) {
       await page.goto(base + `/app/goals/${id}/roadmap`);
-      await page.waitForFunction(() => Object.keys(document.querySelector("select") || {}).some((key) => key.startsWith("__reactProps$")));
+      await page.waitForFunction(() => Object.keys(document.querySelector(".roadmap-header select") || {}).some((key) => key.startsWith("__reactProps$")));
       const isDark = await page.evaluate(() => document.documentElement.classList.contains("dark"));
-      if (isDark !== (theme === "dark")) await page.getByRole("button", { name: "Toggle colour theme" }).click();
+      if (isDark !== (theme === "dark")) await page.locator("header button:visible").filter({ has: page.locator("svg.lucide-moon") }).click();
       for (const locale of ["en", "hi", "mr"]) {
-        await page.getByRole("combobox", { name: "Roadmap language" }).selectOption(locale);
+        await page.locator(".roadmap-header select:visible").selectOption(locale);
         await page.waitForTimeout(250);
         const overflow = await page.locator(".civic-node-content").evaluateAll((nodes) => nodes.filter((node) => node.scrollWidth > node.clientWidth + 1 || node.scrollHeight > node.clientHeight + 1).map((node) => node.textContent));
         const outsideCard = await page.locator(".react-flow__node").evaluateAll((nodes) => nodes.filter((node) => {

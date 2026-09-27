@@ -2,6 +2,20 @@
 
 Updated: 27 September 2026
 
+## Final frontend audit and language coverage
+
+- Followed the master prompt's locale-dictionary, language-preservation, command-palette, filtering and confirmation requirements within the existing sample application.
+- Centralised English/Hindi/Marathi display translations for public navigation/pages, service cards/details, intake, dashboard, roadmap controls, all six procedures' supported questions/steps/descriptions/document names, readiness, comparisons, reports and admin controls. Official source names/wording, URLs, saved identifiers and user notes remain unchanged. Unknown text retains the prompt's English fallback; no translation service or backend dependency was introduced.
+- Added header/mobile language controls. Switching language preserves saved answers, progress, readiness, notes and review decisions. Local assistant responses and service search support the selected language.
+- Added accessible Ctrl/Cmd+K search with keyboard selection, empty state, focus restoration, supported service/tool navigation and light/dark/system theme commands. Mobile navigation scrolls on short screens and shows the active route.
+- Added current dependency-status filtering, translated-title search, clear filters and automatic graph fitting when the visible node set changes.
+- Repaired assistant scope on catalogue/intake/service routes, separated conversations between services, cancelled pending requests on context unmount, explained current step variants and exposed document reuse. Local execution answers use current workflow state; API contracts are unchanged.
+- Repeat intake offers Resume and What-if. Replacing a sample with saved work requires an explicit in-app choice; cancelling leaves stored state unchanged. Compilation reports unavailable browser storage.
+
+Validation: lint, strict typecheck, 77 unit tests and the Webpack production build pass. Production browser runs pass for existing smoke journeys; search, themes, filters, intake cancellation and assistant isolation; Hindi/Marathi public/intake/service/tool routes at 320/768/1440px; all six graph layouts in three languages, two themes and three widths; scenario/readiness/PDF tools at five widths; and all admin sections/review preservation at five widths. No application console errors were observed in these runs. Translation tests cover every supported sample variant and unchanged canonical records. Only generated Next.js caches were cleared to resolve the local disk-space limit.
+
+Authentication, shared backend, Supabase, ingestion, uploads, dependencies, original source records and API contracts remain untouched. No personal names/usernames were added. This round is approved for pushing to `main` after verification.
+
 ## Roadmap workspace tools and admin catalogue
 
 Follow the master prompt's what-if (goal what-if route), document matrix and export requirements. Reuse supported procedure questions and the existing browser-local workflow engine. No authentication, Supabase, uploads or ingestion changes; no new dependencies or personal names.
