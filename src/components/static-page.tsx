@@ -1,1 +1,57 @@
-import {SiteFooter} from "@/components/site-footer";import {SiteHeader} from "@/components/site-header";export function StaticPage({eyebrow,title,body}:{eyebrow:string;title:string;body:string}){return <><SiteHeader/><main className="shell min-h-[65vh] py-20"><p className="eyebrow">{eyebrow}</p><h1 className="mt-5 max-w-4xl text-5xl font-semibold tracking-[-.055em] md:text-7xl">{title}</h1><p className="mt-8 max-w-2xl text-lg leading-8 text-muted">{body}</p></main><SiteFooter/></>}
+import Link from "next/link";
+import { ArrowRight, CheckCircle2, Landmark, ShieldCheck } from "lucide-react";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
+export function StaticPage({
+  eyebrow,
+  title,
+  body,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+}) {
+  return (
+    <>
+      <SiteHeader />
+      <main className="shell min-h-[65vh] py-16 md:py-24">
+        <div className="grid items-start gap-12 lg:grid-cols-[1.3fr_.7fr]">
+          <div>
+            <p className="eyebrow">{eyebrow}</p>
+            <h1 className="mt-5 max-w-4xl text-5xl font-semibold tracking-[-.055em] md:text-7xl">
+              {title}
+            </h1>
+            <p className="mt-8 max-w-2xl text-lg leading-8 text-muted">
+              {body}
+            </p>
+            <Link href="/demo" className="button-primary mt-8">
+              Explore the verified demo <ArrowRight size={16} />
+            </Link>
+          </div>
+          <aside className="card relative overflow-hidden p-6">
+            <div className="absolute -right-12 -top-12 size-40 rounded-full bg-accent/40 blur-3xl" />
+            <span className="grid size-12 place-items-center rounded-2xl bg-brand text-white">
+              <Landmark />
+            </span>
+            <h2 className="mt-8 text-xl font-semibold">
+              The CivicFlow promise
+            </h2>
+            <div className="mt-5 space-y-4 text-sm text-muted">
+              <p className="flex gap-3">
+                <ShieldCheck className="shrink-0 text-brand" size={18} />
+                AI can explain and organise, but never becomes the source of
+                legal truth.
+              </p>
+              <p className="flex gap-3">
+                <CheckCircle2 className="shrink-0 text-brand" size={18} />
+                Every procedural claim displays its evidence and verification
+                state.
+              </p>
+            </div>
+          </aside>
+        </div>
+      </main>
+      <SiteFooter />
+    </>
+  );
+}
