@@ -72,4 +72,25 @@ describe("copilot API", () => {
     expect(data.answer).toContain("Current sample progress");
     expect(data.answer).toContain("Prepare service enterprise details");
   });
+
+  it("reuses a cached live answer for repeated preset questions", async () => {
+    vi.mocked(generateText).mockResolvedValue({
+      text: "पुढील कृती म्हणून अर्जदारांच्या ओळख पुराव्यांची तयारी करा आणि अधिकृत सहकार आयुक्त स्रोत तपासा.",
+      finishReason: "stop",
+      finalStep: { response: { modelId: "google/gemma-4-31b-it:free" } },
+    } as Awaited<ReturnType<typeof generateText>>);
+    const requestBody = JSON.stringify({
+      question: "मी पुढे काय करावे?",
+      pathname: "/app/goals/society-registration/roadmap",
+      locale: "mr",
+      workflow: compileProcedure("society-registration"),
+    });
+
+    const first = await POST(new Request("http://localhost/api/copilot", { method: "POST", body: requestBody }));
+    const second = await POST(new Request("http://localhost/api/copilot", { method: "POST", body: requestBody }));
+
+    expect(await first.json()).toMatchObject({ mode: "live", cache: "miss" });
+    expect(await second.json()).toMatchObject({ mode: "live", cache: "hit" });
+    expect(generateText).toHaveBeenCalledTimes(1);
+  });
 });

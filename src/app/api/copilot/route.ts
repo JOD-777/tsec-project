@@ -1,5 +1,7 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { getCache } from "@vercel/functions";
 import { generateText } from "ai";
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isSafeAssistantAnswer } from "@/lib/ai-response";
@@ -9,6 +11,34 @@ import { documentChecklist, stepStatus, workflowGraph, workflowSchema, workflowS
 import type { Language } from "@/lib/translations";
 
 export const maxDuration = 30;
+
+const responseCache = getCache({
+  namespace: "civicflow-copilot-v1",
+  keyHashFunction: (key) => createHash("sha256").update(key).digest("hex"),
+});
+const cacheableQuestions = new Set([
+  "What should I do next?",
+  "Which documents can I reuse?",
+  "How is this information verified?",
+  "मुझे आगे क्या करना चाहिए?",
+  "कौन से दस्तावेज़ दोबारा उपयोग कर सकता हूँ?",
+  "यह जानकारी कैसे सत्यापित होती है?",
+  "मी पुढे काय करावे?",
+  "कोणती कागदपत्रे पुन्हा वापरता येतील?",
+  "या माहितीची पडताळणी कशी केली जाते?",
+]);
+const cacheableStarters = new Set([
+  "I can explain this roadmap, surface the next action, and show which claims still need official verification.",
+  "Tell me which civic service you need. I’ll route you to a supported procedure and keep official sources separate from guidance.",
+]);
+
+type LiveAnswer = { answer: string; mode: "live"; model: string };
+
+function isLiveAnswer(value: unknown): value is LiveAnswer {
+  if (!value || typeof value !== "object") return false;
+  const answer = value as Partial<LiveAnswer>;
+  return answer.mode === "live" && typeof answer.answer === "string" && typeof answer.model === "string";
+}
 
 const requestSchema = z.object({
   question: z.string().trim().min(3).max(600),
@@ -54,6 +84,18 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   const { question, pathname, locale, workflow, history } = parsed.data;
+  const hasCacheableHistory = history.length === 0 || (
+    history.length === 1 &&
+    history[0].role === "assistant" &&
+    cacheableStarters.has(history[0].content)
+  );
+  const cacheKey = cacheableQuestions.has(question) && hasCacheableHistory
+    ? JSON.stringify({ question, pathname, locale, workflow, history })
+    : null;
+  if (cacheKey) {
+    const cached = await responseCache.get(cacheKey).catch(() => null);
+    if (isLiveAnswer(cached)) return NextResponse.json({ ...cached, cache: "hit" });
+  }
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey)
     return NextResponse.json({
@@ -73,10 +115,10 @@ export async function POST(request: Request) {
     });
     const modelId =
       process.env.OPENROUTER_COPILOT_MODEL ||
-      "poolside/laguna-xs-2.1:free";
+      "google/gemma-4-31b-it:free";
     const fallbackModels = [
       modelId,
-      "google/gemma-4-31b-it:free",
+      "poolside/laguna-xs-2.1:free",
       "openrouter/free",
     ].filter((model, index, models) => models.indexOf(model) === index);
     const result = await generateText({
@@ -94,11 +136,19 @@ export async function POST(request: Request) {
     const answer = result.text.trim();
     const unusable = !isSafeAssistantAnswer(answer, result.finishReason);
     const model = result.finalStep.response.modelId || modelId;
-    return NextResponse.json({
+    const response: LiveAnswer | { answer: string; mode: "safe"; model: string } = {
       answer: unusable ? safeFallback(question, workflow, locale) : answer,
       mode: unusable ? "safe" : "live",
       model: unusable ? "CivicFlow verified fallback" : model,
-    });
+    };
+    if (cacheKey && response.mode === "live") {
+      await responseCache.set(cacheKey, response, {
+        ttl: 21_600,
+        tags: ["copilot-responses"],
+        name: "CivicFlow preset response",
+      }).catch(() => undefined);
+    }
+    return NextResponse.json({ ...response, cache: "miss" });
   } catch (error) {
     console.error(
       "CivicFlow copilot request failed",
