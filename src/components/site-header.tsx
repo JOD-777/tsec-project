@@ -5,8 +5,10 @@ import { updateDemo, type Locale } from "@/lib/local-demo";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Landmark, Menu, Moon, Search, Sun, X } from "lucide-react";
+import { Menu, Moon, Search, Sun, X } from "lucide-react";
 import { useRef, useState } from "react";
+import { FieldSelect } from "@/components/ui/field-select";
+import { CivicFlowLogo } from "@/components/civicflow-logo";
 
 export function SiteHeader({ compact = false }: { compact?: boolean }) {
   const { t, locale } = useTranslation();
@@ -28,16 +30,7 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
   return (
     <header className="sticky top-0 z-50 border-b border-line/80 bg-background/85 backdrop-blur-xl">
       <div className="shell flex h-16 items-center justify-between gap-3">
-        <Link
-          aria-label={t("CivicFlow AI home")}
-          href="/"
-          className="flex shrink-0 items-center gap-2 whitespace-nowrap font-semibold tracking-[-.02em]"
-        >
-          <span className="grid size-8 place-items-center rounded-xl bg-brand-strong text-white dark:text-black">
-            <Landmark size={17} />
-          </span>
-          <span className="text-sm sm:text-base">CivicFlow <span className="text-brand">AI</span></span>
-        </Link>
+        <CivicFlowLogo />
         <nav
           className="hidden items-center gap-1 text-sm text-muted lg:flex"
           aria-label={t("Main navigation")}
@@ -53,7 +46,7 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
             </Link>
           ))}
         </nav>
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2"><label className="hidden xl:block"><span className="sr-only">{t("Interface language")}</span><select className="field !w-auto !px-2 !py-2 text-xs" value={locale} onChange={(event) => updateDemo((current) => ({ ...current, locale: event.target.value as Locale }))}><option value="en">English</option><option value="hi">हिंदी</option><option value="mr">मराठी</option></select></label>
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2"><div className="hidden xl:block"><FieldSelect compact className="w-28" ariaLabel={t("Interface language")} value={locale} onValueChange={(value) => updateDemo((current) => ({ ...current, locale: value as Locale }))} options={[{ value: "en", label: "English" }, { value: "hi", label: "हिंदी" }, { value: "mr", label: "मराठी" }]} /></div>
           <button className="hidden size-9 shrink-0 place-items-center rounded-full border border-line bg-surface min-[360px]:grid" aria-label={t("Search CivicFlow")} aria-keyshortcuts="Control+k Meta+k" onClick={() => window.dispatchEvent(new Event("civicflow:open-search"))}><Search size={17} /></button>
           <button
             className="hidden size-11 shrink-0 place-items-center rounded-full border border-line bg-surface min-[420px]:grid"
@@ -103,7 +96,7 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
             className="rounded-xl bg-brand px-3 py-2 font-semibold text-white"
             href="/demo"
           > {t("Try the demo")} </Link>
-          <label className="px-3 py-2 text-sm">{t("Interface language")} <select className="field !w-auto !px-2 !py-2 text-xs" value={locale} onChange={(event) => updateDemo((current) => ({ ...current, locale: event.target.value as Locale }))}><option value="en">English</option><option value="hi">हिंदी</option><option value="mr">मराठी</option></select></label>
+          <div className="px-3 py-2 text-sm"><span className="mb-2 block">{t("Interface language")}</span><FieldSelect compact ariaLabel={t("Interface language")} value={locale} onValueChange={(value) => updateDemo((current) => ({ ...current, locale: value as Locale }))} options={[{ value: "en", label: "English" }, { value: "hi", label: "हिंदी" }, { value: "mr", label: "मराठी" }]} /></div>
         </nav>
       )}
     </header>

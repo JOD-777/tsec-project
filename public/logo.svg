@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title desc">
+  <title id="title">CivicFlow AI</title>
+  <desc id="desc">A civic building mark with a flowing path</desc>
+  <defs>
+    <linearGradient id="bg" x1="10" y1="8" x2="88" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#12b886"/>
+      <stop offset="1" stop-color="#087f70"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" rx="27" fill="url(#bg)"/>
+  <path d="M22 39 48 25l26 14" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M27 43h42M30 47v21m12-21v21m12-21v21m12-21v21M24 73h48" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+  <path d="M48 78c11 0 20-3 20-10" fill="none" stroke="#d8fff1" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="68" cy="68" r="5" fill="#d8fff1"/>
+</svg>

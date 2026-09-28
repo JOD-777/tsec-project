@@ -139,6 +139,29 @@
 }
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--brand) 55%, var(--line)) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand) 55%, var(--line));
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--brand);
+  background-clip: content-box;
 }
 body {
   min-height: 100vh;
@@ -236,6 +259,7 @@ summary:focus-visible {
   border-radius: 1.35rem;
   box-shadow: 0 22px 60px rgba(14, 45, 35, 0.06);
   backdrop-filter: blur(14px);
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
 }
 .button-primary {
   display: inline-flex;
@@ -256,6 +280,12 @@ summary:focus-visible {
 .button-primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 28px color-mix(in srgb, var(--brand) 28%, transparent);
+}
+.button-primary svg,
+.button-secondary svg,
+.icon-button svg,
+.choice {
+  transition: transform 0.22s ease, color 0.22s ease, background-color 0.22s ease;
 }
 .button-primary:active,
 .button-secondary:active {
@@ -321,6 +351,11 @@ summary:focus-visible {
   border-radius: 0.9rem;
   padding: 0.85rem 1rem;
   transition: 0.2s ease;
+}
+.choice:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--brand) 65%, var(--line));
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--brand) 10%, transparent);
 }
 .choice:has(input:checked) {
   border-color: var(--brand);
@@ -409,6 +444,38 @@ html:has(.copilot-panel[data-open="true"]) {
   background: var(--surface-2);
   color: var(--foreground);
 }
+.icon-button:hover svg,
+.button-primary:hover svg,
+.button-secondary:hover svg {
+  transform: scale(1.08);
+}
+@media (hover: hover) {
+  .card:hover {
+    border-color: color-mix(in srgb, var(--brand) 32%, var(--line));
+    box-shadow: 0 26px 70px rgba(14, 45, 35, 0.1);
+  }
+  footer a:hover {
+    color: var(--brand);
+    transform: translateX(2px);
+  }
+  footer a {
+    width: fit-content;
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+  .civic-node:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(20, 33, 29, 0.13);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 @media (max-width: 640px) {
   .copilot-launcher {
     right: 1rem;
@@ -433,7 +500,7 @@ input, select, textarea { font: inherit; }
 textarea { resize: vertical; }
 .skip-link { position: fixed; top: .5rem; left: .5rem; z-index: 100; transform: translateY(-160%); background: var(--surface); border: 2px solid var(--brand); border-radius: .5rem; padding: .75rem; }
 .skip-link:focus { transform: translateY(0); }
-.civic-node { background: var(--surface); color: var(--foreground); border: 1px solid var(--line); border-left: 5px solid var(--line); box-shadow: 0 5px 18px rgba(20,33,29,.07); }
+.civic-node { background: var(--surface); color: var(--foreground); border: 1px solid var(--line); border-left: 5px solid var(--line); box-shadow: 0 5px 18px rgba(20,33,29,.07); transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
 .civic-node-content { width: 100%; min-width: 0; overflow-wrap: anywhere; }
 .civic-node-ready { border-left-color: #8aaa2a; }
 .civic-node-complete { border-left-color: var(--brand); }

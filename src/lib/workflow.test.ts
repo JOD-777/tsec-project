@@ -21,14 +21,14 @@ describe("local workflow execution", () => {
   it("counts required steps only, including after optional completion", () => {
     let workflow = compileWorkflow(defaultAnswers);
     for (const id of ["udyam", "premises", "fssai", "docs", "gst", "apply", "ready"]) workflow = toggleStep(workflow, id);
-    expect(workflowSummary(workflow)).toMatchObject({ done: 7, required: 7, progress: 100, next: undefined });
+    expect(workflowSummary(workflow)).toMatchObject({ done: 6, required: 6, progress: 100, next: undefined });
   });
   it("reopens descendants without invalidating an independent parallel branch", () => {
     let workflow = compileWorkflow(defaultAnswers);
     for (const id of ["premises", "fssai", "docs", "gst", "apply", "ready"]) workflow = toggleStep(workflow, id);
     workflow = toggleStep(workflow, "premises");
     expect(workflow.completed).toEqual(["scope", "fssai", "gst"]);
-    expect(workflowSummary(workflow).progress).toBe(43);
+    expect(workflowSummary(workflow).progress).toBe(33);
     expect(workflowSummary(workflow).next?.id).toBe("premises");
   });
   it("aggregates document reuse across steps instead of fixed counters", () => {

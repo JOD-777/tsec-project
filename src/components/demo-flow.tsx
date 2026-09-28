@@ -19,6 +19,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site-header";
+import { FieldSelect } from "@/components/ui/field-select";
 import { useWorkflowDemo, updateWorkflow } from "@/lib/local-demo";
 import { defaultProfile, resolveProcedure, type Procedure, type Profile } from "@/lib/procedures";
 import { ServiceCards } from "@/components/service-cards";
@@ -203,20 +204,32 @@ function DemoIntake({ goal, procedure }: { goal: string; procedure: Procedure })
                     label={t("Where will you operate?")}
                     hint={t("This selects the applicable municipal authority.")}
                   >
-                    <select aria-label={t("Where will you operate?")} className="field mt-2" value={answers.premises} onChange={(event) => setDraft({ ...answers, premises: event.target.value as Answers["premises"] })}>
-                      <option value="home">{t("Home premises in Mumbai")}</option>
-                      <option value="commercial">{t("Commercial premises in Mumbai")}</option>
-                    </select>
+                    <FieldSelect
+                      ariaLabel={t("Where will you operate?")}
+                      className="mt-2"
+                      value={answers.premises}
+                      onValueChange={(premises) => setDraft({ ...answers, premises: premises as Answers["premises"] })}
+                      options={[
+                        { value: "home", label: t("Home premises in Mumbai") },
+                        { value: "commercial", label: t("Commercial premises in Mumbai") },
+                      ]}
+                    />
                   </Question>
                   <Question
                     label={t("What will you primarily do?")}
                     hint={t("The activity changes the official eligibility path.")}
                   >
-                    <select aria-label={t("What will you primarily do?")} className="field mt-2" value={answers.activity} onChange={(event) => setDraft({ ...answers, activity: event.target.value as Answers["activity"] })}>
-                      <option value="prepare">{t("Prepare and deliver food")}</option>
-                      <option value="package">{t("Package food products")}</option>
-                      <option value="resell">{t("Resell packaged goods")}</option>
-                    </select>
+                    <FieldSelect
+                      ariaLabel={t("What will you primarily do?")}
+                      className="mt-2"
+                      value={answers.activity}
+                      onValueChange={(activity) => setDraft({ ...answers, activity: activity as Answers["activity"] })}
+                      options={[
+                        { value: "prepare", label: t("Prepare and deliver food") },
+                        { value: "package", label: t("Package food products") },
+                        { value: "resell", label: t("Resell packaged goods") },
+                      ]}
+                    />
                   </Question>
                   <Question
                     label={t("Do you already have a food business registration or licence?")}
@@ -229,7 +242,7 @@ function DemoIntake({ goal, procedure }: { goal: string; procedure: Procedure })
                         <input checked={answers.existingRegistration} onChange={() => setDraft({ ...answers, existingRegistration: true })} type="radio" name="existing" /> {t("Yes")} </label>
                     </div>
                   </Question>
-                  </> : procedure.questions.map((question) => <Question key={question.id} label={t(question.label)} hint={t("Your answer personalizes this sample roadmap.")}><select className="field mt-2" aria-label={t(question.label)} value={profile[question.id]} onChange={(event) => setDraftProfile({ ...profile, [question.id]: event.target.value })}>{question.options.map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}</select></Question>)}
+                  </> : procedure.questions.map((question) => <Question key={question.id} label={t(question.label)} hint={t("Your answer personalizes this sample roadmap.")}><FieldSelect className="mt-2" ariaLabel={t(question.label)} value={profile[question.id]} onValueChange={(value) => setDraftProfile({ ...profile, [question.id]: value })} options={question.options.map(([value, label]) => ({ value, label: t(label) }))} /></Question>)}
                   <p className="text-sm leading-6 text-muted">{t(procedure.description)}</p>
                   <label className="flex min-h-11 items-start gap-3 text-sm"><input className="mt-1 accent-brand" type="checkbox" checked={jurisdictionConfirmed} onChange={(event) => setJurisdictionConfirmed(event.target.checked)} /><span>{t("Use the")} {t(procedure.jurisdiction)} {t("sample jurisdiction.")}</span></label>
                   <button

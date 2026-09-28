@@ -19,8 +19,8 @@ describe("remaining frontend flows", () => {
   });
   it("explains the current branch instead of the seeded step", () => {
     const workflow = compileProcedure("birth-certificate", { record: "unknown", channel: "ward" });
-    expect(localCopilotAnswer("Explain the sample step: Contact the ward office about the record", workflow)).toContain("missing record");
-    expect(localCopilotAnswer("What should I do next?", workflow)).toContain("Contact the ward office");
+    expect(localCopilotAnswer("Explain the sample step: Ask the ward Citizen Facilitation Centre to locate the record", workflow)).toContain("nearest ward");
+    expect(localCopilotAnswer("What should I do next?", workflow)).toContain("Citizen Facilitation Centre");
   });
   it("reports document reuse and preparedness separately from progress", () => {
     const workflow = { ...compileWorkflow(defaultAnswers), documents: ["Premises proof"] };
@@ -45,10 +45,10 @@ describe("remaining frontend flows", () => {
   it("filters current dependency statuses and translated titles", () => {
     const workflow = toggleStep(compileWorkflow(defaultAnswers), "fssai");
     const filters = { search: "", locale: "en" as const, showOptional: true, showCompleted: true, status: "ready" as const };
-    expect(filterRoadmap(workflow, filters).map((step) => step.id)).toEqual(["premises", "gst"]);
+    expect(filterRoadmap(workflow, filters).map((step) => step.id)).toEqual(["premises"]);
     expect(filterRoadmap(workflow, { ...filters, status: "complete", showCompleted: false })).toEqual([]);
     expect(filterRoadmap(workflow, { ...filters, status: "all", locale: "hi", search: "परिसर अनुमतियाँ" }).map((step) => step.id)).toEqual(["premises"]);
-    expect(filterRoadmap(workflow, { ...filters, status: "optional" }).map((step) => step.id)).toEqual(["udyam"]);
+    expect(filterRoadmap(workflow, { ...filters, status: "optional" }).map((step) => step.id)).toEqual(["udyam", "gst"]);
     expect(workflowGraph(workflow).items).toHaveLength(8);
   });
 });

@@ -6,11 +6,11 @@ describe("admin catalogue diagnostics", () => {
   it("includes all six published sample procedures", () => {
     const inventory = catalogueInventory();
     expect(inventory.map((entry) => entry.procedure.id)).toEqual(procedures.map((procedure) => procedure.id));
-    expect(inventory.reduce((total, entry) => total + entry.items.length, 0)).toBe(42);
+    expect(inventory.reduce((total, entry) => total + entry.items.length, 0)).toBe(44);
   });
-  it("actually compiles and completes all 34 supported intake combinations", () => {
+  it("actually compiles and completes all 38 supported intake combinations", () => {
     const evaluation = evaluateCatalogue();
-    expect(evaluation).toMatchObject({ valid: true, sourceLinksValid: true, totalVariants: 34 });
+    expect(evaluation).toMatchObject({ valid: true, sourceLinksValid: true, totalVariants: 38 });
     expect(evaluation.results.find((result) => result.id === "home-food-business")?.variants).toBe(12);
     expect(evaluation.results.every((result) => result.errors.length === 0)).toBe(true);
   });

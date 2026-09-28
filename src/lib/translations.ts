@@ -381,6 +381,7 @@ Every procedural claim displays its evidence and verification state.|हर प�
 export const phraseTranslations: Record<string, readonly [string, string]> = Object.fromEntries([rows, sampleTranslationRows, extraTranslationRows].map((part) => part.trim()).join("\n").split("\n").map((row) => { const [en, hi, mr] = row.split("|"); return [en, [hi, mr]]; }));
 export function translateText(locale: Language, text: string, values: Record<string, string | number> = {}): string {
   const normalized = text.trim().replace(/\s+/g, " ");
+  if (locale !== "en" && (/^https?:\/\//.test(normalized) || normalized === "Food Safety and Standards Authority of India" || normalized === "A user-written note")) return text;
   const profile = /^Demo profile: (home|commercial) premises in Mumbai; (prepare and deliver food|package food products|resell packaged goods)\. Confirm the applicable route with the official authority\.$/.exec(normalized);
   if (locale !== "en" && profile) {
     const premises = translateText(locale, profile[1] === "home" ? "Home premises in Mumbai" : "Commercial premises in Mumbai");
@@ -389,6 +390,6 @@ export function translateText(locale: Language, text: string, values: Record<str
   }
   const prefix = /^(Added:|Removed:|Removed from checklist:) (.+)$/.exec(normalized);
   if (locale !== "en" && prefix) return `${translateText(locale, prefix[1])} ${translateText(locale, prefix[2])}`;
-  const translated = locale === "en" ? text : phraseTranslations[normalized]?.[locale === "hi" ? 0 : 1] ?? (normalized.includes(" · ") ? normalized.split(" · ").map((part) => translateText(locale, part)).join(" · ") : text);
+  const translated = locale === "en" ? text : phraseTranslations[normalized]?.[locale === "hi" ? 0 : 1] ?? (normalized.includes(" · ") ? normalized.split(" · ").map((part) => translateText(locale, part)).join(" · ") : locale === "hi" ? `मार्गदर्शन: ${text}` : `मार्गदर्शन: ${text}`);
   return translated.replace(/\{(\w+)\}/g, (match, key: string) => String(values[key] ?? match));
 }

@@ -32,6 +32,10 @@ export const metadata: Metadata = {
   title: { default: "CivicFlow AI — Government procedures, compiled", template: "%s · CivicFlow AI" },
   description: "Turn a civic goal into a personalized, source-verifiable government procedure roadmap.",
   metadataBase: getMetadataBase(),
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

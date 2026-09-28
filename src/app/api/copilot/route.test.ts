@@ -47,7 +47,7 @@ describe("copilot API", () => {
 
     expect(data).toMatchObject({ mode: "live", model: "poolside/laguna-xs-2.1:free" });
     expect(options.instructions).toContain("Get a birth certificate");
-    expect(options.instructions).toContain("Contact the ward office about the record");
+    expect(options.instructions).toContain("Ask the ward Citizen Facilitation Centre to locate the record");
     expect(options.messages).toEqual([
       { role: "assistant", content: "How can I help?" },
       { role: "user", content: "What should I do next?" },
