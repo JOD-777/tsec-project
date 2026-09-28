@@ -477,6 +477,12 @@ html:has(.copilot-panel[data-open="true"]) {
   }
 }
 @media (max-width: 640px) {
+  .shell { width: calc(100% - 24px); }
+  .roadmap-shell { width: calc(100% - 16px); }
+  .button-primary, .button-secondary { min-height: 44px; }
+  .field, .input-control { min-height: 44px; }
+  .roadmap-header .roadmap-shell { align-items: flex-start; }
+  .roadmap-summary { padding-block: .65rem; }
   .copilot-launcher {
     right: 1rem;
     bottom: max(1rem, env(safe-area-inset-bottom));
@@ -488,7 +494,9 @@ html:has(.copilot-panel[data-open="true"]) {
     height: calc(100dvh - env(safe-area-inset-top));
     border-width: 0;
     border-radius: 0;
+    padding-bottom: env(safe-area-inset-bottom);
   }
+  .copilot-panel > header { padding-top: max(.875rem, env(safe-area-inset-top)); }
 }
 
 main { scroll-margin-top: 5rem; }
