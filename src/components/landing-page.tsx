@@ -77,7 +77,7 @@ export function LandingPage() {
                   data-gramm_editor="false"
                   data-enable-grammarly="false"
                   onChange={(e) => setGoal(e.target.value)}
-                  className="min-w-0 flex-1 bg-transparent px-1 py-4 outline-none"
+                  className="landing-goal-input input-control min-w-0 flex-1 bg-transparent px-1 py-4"
                   placeholder={copy.prompt}
                 />
                 <button

@@ -498,6 +498,24 @@ button:disabled { cursor: not-allowed; }
 .button-primary svg, .button-secondary svg, .badge svg { flex-shrink: 0; }
 input, select, textarea { font: inherit; }
 textarea { resize: vertical; }
+.input-control,
+.field {
+  box-sizing: border-box;
+  outline: none;
+  box-shadow: none;
+  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+.input-control::placeholder,
+.field::placeholder,
+.copilot-input::placeholder { color: var(--muted); opacity: .9; }
+.input-control:focus-visible,
+.field:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent); }
+.landing-goal-input { border: 0; outline: none !important; box-shadow: none !important; }
+.landing-goal-input:focus,
+.landing-goal-input:focus-visible { outline: none !important; box-shadow: none !important; }
+.field { border-width: 1px; }
+.field:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 16%, transparent); }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--brand); }
 .skip-link { position: fixed; top: .5rem; left: .5rem; z-index: 100; transform: translateY(-160%); background: var(--surface); border: 2px solid var(--brand); border-radius: .5rem; padding: .75rem; }
 .skip-link:focus { transform: translateY(0); }
 .civic-node { background: var(--surface); color: var(--foreground); border: 1px solid var(--line); border-left: 5px solid var(--line); box-shadow: 0 5px 18px rgba(20,33,29,.07); transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
