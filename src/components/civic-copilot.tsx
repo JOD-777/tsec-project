@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useWorkflowDemo } from "@/lib/local-demo";
 import { getProcedure } from "@/lib/procedures";
-import { copilotProcedure, localCopilotAnswer } from "@/lib/copilot-context";
+import { copilotProcedure } from "@/lib/copilot-context";
 import {
   Message as AIMessage,
   MessageContent,
@@ -91,15 +91,16 @@ function CopilotSession({ pathname, procedureId }: { pathname: string; procedure
     const controller = new AbortController();
     requestRef.current = controller;
     try {
-      const answer = localCopilotAnswer(clean, procedureId ? demo.workflow : undefined, locale);
-      if (answer) {
-        setMessages((current) => [...current, { role: "assistant", text: answer, meta: procedureId ? "Current browser-local demo state" : "Service catalogue context" }]);
-        return;
-      }
       const response = await fetch("/api/copilot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: clean, pathname }),
+        body: JSON.stringify({
+          question: clean,
+          pathname,
+          locale,
+          workflow: procedureId ? { ...demo.workflow, notes: {} } : undefined,
+          history: messages.slice(-6).map(({ role, text: content }) => ({ role, content })),
+        }),
         signal: AbortSignal.any([controller.signal, AbortSignal.timeout(25_000)]),
       });
       const data = await response.json();
@@ -114,7 +115,7 @@ function CopilotSession({ pathname, procedureId }: { pathname: string; procedure
           meta:
             data.mode === "live"
               ? `Live AI · ${data.model}`
-              : "Sample fallback mode",
+              : "Verified guidance fallback · AI temporarily unavailable",
         },
       ]);
     } catch {
@@ -235,7 +236,7 @@ function CopilotSession({ pathname, procedureId }: { pathname: string; procedure
             {loading ? (
               <div className="mr-16 rounded-2xl rounded-bl-sm border border-line bg-surface-2 px-4 py-3">
                 <span className="flex items-center gap-2 text-xs text-muted">
-                  <LoaderCircle className="animate-spin" size={14} /> {t("Checking the sample context…")} </span>
+                  <LoaderCircle className="animate-spin" size={14} /> {t("Consulting CivicFlow AI…")} </span>
               </div>
             ) : null}
             <div ref={endRef} />

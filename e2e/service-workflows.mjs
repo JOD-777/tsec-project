@@ -68,7 +68,7 @@ try {
     await page.getByRole("button", { name: "Open CivicFlow Copilot" }).click();
     await page.getByRole("textbox", { name: "Ask CivicFlow", exact: true }).fill("What should I do next?");
     await page.getByRole("button", { name: "Send question" }).click();
-    await page.getByText(/Current sample progress:/).last().waitFor();
+    await page.getByText(/Live AI ·|Verified guidance fallback ·/).last().waitFor();
     await page.getByRole("button", { name: "Close CivicFlow Copilot" }).click();
     console.log(`PASS intake, completion, notes, reload and assistant: ${id}`);
   }

@@ -267,6 +267,7 @@ CivicFlow Copilot|CivicFlow सहायक|CivicFlow सहाय्यक
 Close CivicFlow Copilot|CivicFlow सहायक बंद करें|CivicFlow सहाय्यक बंद करा
 Assistant conversation|सहायक की बातचीत|सहाय्यकाचा संवाद
 Checking the sample context…|नमूने की जानकारी जाँच रहे हैं…|नमुन्याची माहिती तपासत आहोत…
+Consulting CivicFlow AI…|CivicFlow AI से जानकारी ले रहे हैं…|CivicFlow AI कडून माहिती घेत आहोत…
 Ask about this civic path…|इस नागरिक प्रक्रिया के बारे में पूछें…|या नागरी प्रक्रियेबद्दल विचारा…
 Send question|प्रश्न भेजें|प्रश्न पाठवा
 No AI claim is treated as official|AI का कोई दावा आधिकारिक नहीं माना जाता|AI चा कोणताही दावा अधिकृत मानला जात नाही
@@ -277,9 +278,12 @@ Which documents can I reuse?|कौन से दस्तावेज़ दो
 How is this information verified?|यह जानकारी कैसे सत्यापित होती है?|या माहितीची पडताळणी कशी केली जाते?
 I can explain this roadmap, surface the next action, and show which claims still need official verification.|मैं इस रोडमैप और अगले काम को समझा सकता हूँ और बता सकता हूँ कि किन दावों का सत्यापन बाकी है।|मी हा मार्गक्रम आणि पुढील कृती समजावू शकतो आणि कोणत्या दाव्यांची पडताळणी बाकी आहे ते सांगू शकतो.
 Sample-context assistant|नमूने की जानकारी वाला सहायक|नमुन्याची माहिती देणारा सहाय्यक
+Tell me which civic service you need. I’ll route you to a supported procedure and keep official sources separate from guidance.|मुझे बताएं कि आपको कौन सी नागरिक सेवा चाहिए। मैं आपको समर्थित प्रक्रिया तक ले जाऊँगा और आधिकारिक स्रोतों को मार्गदर्शन से अलग रखूँगा।|तुम्हाला कोणती नागरी सेवा हवी आहे ते सांगा. मी तुम्हाला समर्थित प्रक्रियेकडे नेईन आणि अधिकृत स्रोत मार्गदर्शनापासून वेगळे ठेवीन.
+Service catalogue assistant|सेवा सूची सहायक|सेवा सूची सहाय्यक
 Current browser-local demo state|ब्राउज़र की वर्तमान डेमो स्थिति|ब्राउझरमधील सध्याची डेमो स्थिती
 Service catalogue context|सेवा सूची की जानकारी|सेवा सूचीची माहिती
 Sample fallback mode|नमूना विकल्प|नमुना पर्याय
+Verified guidance fallback · AI temporarily unavailable|सत्यापित मार्गदर्शन विकल्प · AI अस्थायी रूप से उपलब्ध नहीं|पडताळलेले मार्गदर्शन पर्याय · AI तात्पुरते उपलब्ध नाही
 Connection fallback|कनेक्शन का विकल्प|जोडणीचा पर्याय
 Close search|खोज बंद करें|शोध बंद करा
 Search services and commands|सेवाएँ और आदेश खोजें|सेवा आणि आदेश शोधा

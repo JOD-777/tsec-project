@@ -69,7 +69,11 @@ fs.mkdirSync(artifacts, { recursive: true });
   await page.getByText('2 / 7', { exact: false }).waitFor();
   await page.getByRole('button', { name: 'Open CivicFlow Copilot' }).click();
   await page.getByRole('button', { name: 'What should I do next?' }).click();
-  await page.getByText(/Next: Check commercial premises permissions/).waitFor();
+  await page.getByText(/Live AI ·|Verified guidance fallback ·/).last().waitFor();
+  const assistantReply = await page.locator('[role="log"] .is-assistant').last().innerText();
+  if (!/commercial|premises|FoSCoS|FSSAI/i.test(assistantReply)) {
+    throw new Error(`Copilot response was not grounded in the current roadmap: ${assistantReply}`);
+  }
   await page.getByRole('button', { name: 'Close CivicFlow Copilot' }).click();
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(baseURL + '/app/goals/home-food-business/roadmap');
