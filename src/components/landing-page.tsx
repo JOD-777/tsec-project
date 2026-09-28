@@ -66,8 +66,16 @@ export function LandingPage() {
                 <Search className="ml-3 shrink-0 text-muted" size={20} />
                 <input
                   id="goal"
+                  name="civic-goal"
                   value={goal}
                   maxLength={500}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="sentences"
+                  spellCheck={false}
+                  data-gramm="false"
+                  data-gramm_editor="false"
+                  data-enable-grammarly="false"
                   onChange={(e) => setGoal(e.target.value)}
                   className="min-w-0 flex-1 bg-transparent px-1 py-4 outline-none"
                   placeholder={copy.prompt}
